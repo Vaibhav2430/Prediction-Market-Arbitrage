@@ -1,7 +1,10 @@
 // Package models contains read-only prediction market data.
 package models
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // Outcome links a label to Gamma's indicative price and its trading asset ID.
 // TokenID is a CTF token ID or, for V2 markets, a position ID.
@@ -23,6 +26,9 @@ type Market struct {
 	EndDate          string
 	ResolutionSource string
 	EventTitles      []string
+	FeesEnabled      *bool
+	FeeRate          json.RawMessage
+	FeeExponent      *int
 }
 
 // YesNo returns prices by outcome label, never by assumed array position.

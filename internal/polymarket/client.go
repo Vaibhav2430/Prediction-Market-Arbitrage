@@ -110,7 +110,12 @@ type gammaMarket struct {
 	Description      string          `json:"description"`
 	EndDate          string          `json:"endDate"`
 	ResolutionSource string          `json:"resolutionSource"`
-	Events           []struct {
+	FeesEnabled      *bool           `json:"feesEnabled"`
+	FeeSchedule      *struct {
+		Rate     json.RawMessage `json:"rate"`
+		Exponent *int            `json:"exponent"`
+	} `json:"feeSchedule"`
+	Events []struct {
 		Title string `json:"title"`
 	} `json:"events"`
 }
@@ -168,6 +173,11 @@ func parseMarket(record json.RawMessage) (models.Market, bool, error) {
 		return market, false, fmt.Errorf("market %s missing outcomes or mismatched outcome/price/token lengths", wire.ID)
 	}
 	market = models.Market{ID: wire.ID, Question: wire.Question, Slug: wire.Slug, ConditionID: wire.ConditionID, Description: wire.Description, EndDate: wire.EndDate, ResolutionSource: wire.ResolutionSource}
+	market.FeesEnabled = wire.FeesEnabled
+	if wire.FeeSchedule != nil {
+		market.FeeRate = wire.FeeSchedule.Rate
+		market.FeeExponent = wire.FeeSchedule.Exponent
+	}
 	for _, event := range wire.Events {
 		if strings.TrimSpace(event.Title) != "" {
 			market.EventTitles = append(market.EventTitles, event.Title)

@@ -293,3 +293,51 @@ close) versus above $51,100 on November 23 (CF Benchmarks average) is covered by
 a regression test and is rejected rather than filling the top results. This
 change does not introduce pricing comparisons, credentials, trading, automatic
 approval, or a verified arbitrage claim.
+
+
+## Explicit pair check (conditional pricing only)
+
+```sh
+# November CPI <=3.3% on Polymarket versus >3.3% on Kalshi:
+# YES predicates are inverted in the ordinary on-time BLS release scenario.
+go run ./cmd/paircheck -polymarket-id 7004029 -kalshi-ticker KXCPIYOY-26NOV-T3.3 -relation inverted -quantity 5
+# Include complete current rules, books and fee metadata:
+go run ./cmd/paircheck -polymarket-id 7004029 -kalshi-ticker KXCPIYOY-26NOV-T3.3 -relation inverted -quantity 5 -format json
+```
+
+This command does not establish equivalence. `-relation same` assumes that the
+YES predicates align and compares Polymarket YES + Kalshi NO, and vice versa.
+`-relation inverted` assumes opposite YES predicates and compares YES + YES
+and NO + NO. The relation is a caller-supplied scenario, not an approval.
+Every result remains unverified; a detected delay/cancellation policy mismatch
+is explicitly marked incompatible. In particular, the CPI example can use a
+previous-month fallback on Polymarket while Kalshi extends settlement during a
+government shutdown. Its normal-release comparison is not a guaranteed hedge.
+The Fed December no-change candidates also have different cancellation handling.
+
+Metadata is checked first, then both Polymarket token books and the Kalshi
+book are fetched concurrently. These are separate snapshots. Whole quantities
+are limited to available best-ask sizes and Polymarket's minimum order size;
+the tool does not consume deeper levels. Missing liquidity, unsupported fees,
+or stale Polymarket timestamps do not produce a net comparison. The default
+`-max-age` is 60s; Kalshi's REST book supplies no exchange timestamp, so receipt
+time alone cannot establish its freshness. The default overall timeout is 30s.
+
+Fees use public per-market Polymarket parameters and Kalshi series parameters
+with event overrides. Unsupported/missing fee metadata withholds net results;
+no zero-fee assumption or rebate is invented. The supported taker formula is
+quantity * rate * price * (1-price). Kalshi's rate is 0.07 times the published
+multiplier. Fee estimates round upward per aggregate leg to $0.00001 for
+Polymarket and $0.0001 for Kalshi; actual fill splitting/rounding may differ.
+Calculations use exact rationals. Funding, withdrawals, intermediary and
+currency-conversion costs are excluded.
+
+A conditional payout-minus-cost result assumes both legs fill and the stated
+relation holds through settlement. It is never labeled guaranteed profit or
+verified arbitrage, even when positive. All operations are public, read-only,
+and unauthenticated; no orders are submitted.
+
+Sources: [Polymarket fee formula and precision](https://docs.polymarket.com/trading/fees),
+[Kalshi current fee schedule](https://kalshi.com/fee-schedule),
+[Kalshi fee formula PDF](https://kalshi.com/docs/kalshi-fee-schedule.pdf), and
+[Kalshi CPI contract terms](https://assets.kalshi.com/contract_terms/YOYCPI.pdf).

@@ -1,0 +1,605 @@
+{
+  "status": "incompatible_exception_rules",
+  "assumed_outcome_relation": "inverted",
+  "review_findings": [
+    "Delayed-release policy differs: Polymarket can resolve using a previous month's figures while Kalshi can extend settlement during a shutdown. These contracts are not verified equivalents."
+  ],
+  "warnings": [
+    "No contract equivalence or guaranteed payout has been verified. The supplied relation is an assumption.",
+    "Quotes are separate snapshots, not an atomic or executable cross-platform package; fills are not guaranteed.",
+    "Fee estimates exclude rebates, funding, withdrawal and currency-conversion costs; fill-level rounding may differ.",
+    "Nominal dollar comparisons assume collateral-to-USD parity; conversion and depeg risk are not modeled.",
+    "Kalshi supplies no exchange timestamp in this REST book: local receipt cannot establish exchange freshness."
+  ],
+  "polymarket": {
+    "venue": "polymarket",
+    "id": "7004029",
+    "title": "Will annual inflation be 3.3% or less in November?",
+    "event": "",
+    "yes_label": "Yes",
+    "no_label": "No",
+    "deadline": "2026-12-10T13:30:00Z",
+    "deadline_kind": "Gamma endDate",
+    "rules_primary": "This is a market about inflation over the 12-month period ending November 2026, before seasonal adjustment, as reported by the Bureau of Labor Statistics.\n\nThis market will resolve to the percentage change in the Consumer Price Index (CPI) over the 12-month period ending in November 2026 according to the monthly Bureau of Labor Statistics (BLS) report.\n\nThe resolution source for this market will be the BLS Consumer Price Index report released for November 2026 (https://www.bls.gov/bls/news-release/cpi.htm), currently scheduled to be released on December 10, 2026, at 8:30 AM ET. Resolution of this market will take place upon release of the aforementioned data.\n\nNote: the resolution source for this market will be the official monthly BLS CPI news release, which reports inflation over 12-month periods to only one decimal point (e.g., 2.9%). Thus, this is the level of precision that will be used when resolving the market.\n\nIf the BLS does not release the relevant figures on the scheduled date, this market may remain open up until the scheduled release time of the next CPI report (https://www.bls.gov/schedule). If the information is not released by that time, this market will resolve according to the figures of the most recent previous month with available data.",
+    "resolution_source": "https://www.bls.gov/bls/news-release/cpi.htm"
+  },
+  "kalshi": {
+    "venue": "kalshi",
+    "id": "KXCPIYOY-26NOV-T3.3",
+    "title": "Will the rate of CPI inflation be above 3.3% for the year ending in November 2026?",
+    "event": "KXCPIYOY-26NOV",
+    "yes_label": "Above 3.3%",
+    "no_label": "Above 3.3%",
+    "deadline": "2026-12-10T13:29:00Z",
+    "deadline_kind": "trading close_time",
+    "expected_expiration": "2026-12-10T15:00:00Z",
+    "latest_expiration": "2027-03-11T15:00:00Z",
+    "rules_primary": "If the Consumer Price Index (CPI) increases by more than 3.3% in the twelve months ending November 2026 (as represented by the one-decimal place value reported by the Bureau of Labor Statistics), then the market resolves to Yes.",
+    "rules_secondary": "In the case of a delay in data caused by a federal government shutdown impacting the reliability of the Source Agency, the market\u2019s latest Expiration Date will be extended to the sooner of the release of the Underlying or six months after the end of the government shutdown"
+  },
+  "polymarket_fees_enabled": true,
+  "polymarket_fee_rate": 0.01,
+  "polymarket_fee_exponent": 1,
+  "kalshi_fees": {
+    "series_ticker": "KXCPIYOY",
+    "type": "quadratic_with_maker_fees",
+    "multiplier": 1
+  },
+  "snapshot_fetch_started": "2026-11-24T00:47:49.768127Z",
+  "snapshot_fetch_completed": "2026-11-24T00:47:49.992395Z",
+  "polymarket_yes_book": {
+    "AssetID": "42598461525817146792953952193813644928334698325321505460685085428993863996611",
+    "ConditionID": "0xf05d0481004c474391723b5d9ef037293706a1cac78209e811214295bbf8a3f8",
+    "Bids": [
+      {
+        "Price": 10,
+        "Size": 17116310000
+      }
+    ],
+    "Asks": [
+      {
+        "Price": 30,
+        "Size": 148990000
+      },
+      {
+        "Price": 40,
+        "Size": 300100000
+      },
+      {
+        "Price": 50,
+        "Size": 138470000
+      },
+      {
+        "Price": 60,
+        "Size": 59980000
+      },
+      {
+        "Price": 90,
+        "Size": 149990000
+      },
+      {
+        "Price": 100,
+        "Size": 220180000
+      },
+      {
+        "Price": 200,
+        "Size": 22500000
+      },
+      {
+        "Price": 290,
+        "Size": 250000000
+      },
+      {
+        "Price": 300,
+        "Size": 5000000
+      },
+      {
+        "Price": 490,
+        "Size": 40000000
+      },
+      {
+        "Price": 500,
+        "Size": 5000000
+      },
+      {
+        "Price": 560,
+        "Size": 20000000
+      },
+      {
+        "Price": 650,
+        "Size": 240000000
+      },
+      {
+        "Price": 660,
+        "Size": 340000000
+      },
+      {
+        "Price": 710,
+        "Size": 45000000
+      },
+      {
+        "Price": 720,
+        "Size": 20000000
+      },
+      {
+        "Price": 830,
+        "Size": 134210000
+      },
+      {
+        "Price": 860,
+        "Size": 52000000
+      },
+      {
+        "Price": 870,
+        "Size": 161450000
+      },
+      {
+        "Price": 940,
+        "Size": 50000000
+      },
+      {
+        "Price": 950,
+        "Size": 80000000
+      },
+      {
+        "Price": 960,
+        "Size": 132000000
+      },
+      {
+        "Price": 1000,
+        "Size": 17300000
+      },
+      {
+        "Price": 1160,
+        "Size": 35000000
+      },
+      {
+        "Price": 1170,
+        "Size": 50000000
+      },
+      {
+        "Price": 1250,
+        "Size": 100000000
+      },
+      {
+        "Price": 1260,
+        "Size": 269000000
+      },
+      {
+        "Price": 1360,
+        "Size": 61000000
+      },
+      {
+        "Price": 1450,
+        "Size": 220000000
+      },
+      {
+        "Price": 1460,
+        "Size": 324000000
+      },
+      {
+        "Price": 1560,
+        "Size": 70000000
+      },
+      {
+        "Price": 2590,
+        "Size": 400000000
+      },
+      {
+        "Price": 2600,
+        "Size": 220000000
+      },
+      {
+        "Price": 4720,
+        "Size": 220000000
+      },
+      {
+        "Price": 5890,
+        "Size": 220000000
+      },
+      {
+        "Price": 5900,
+        "Size": 175000000
+      },
+      {
+        "Price": 7780,
+        "Size": 96000000
+      },
+      {
+        "Price": 7980,
+        "Size": 607500000
+      },
+      {
+        "Price": 7990,
+        "Size": 3375000000
+      },
+      {
+        "Price": 8000,
+        "Size": 3000000000
+      },
+      {
+        "Price": 8010,
+        "Size": 251250000
+      },
+      {
+        "Price": 9100,
+        "Size": 5000000
+      },
+      {
+        "Price": 9590,
+        "Size": 16740000
+      },
+      {
+        "Price": 9600,
+        "Size": 350000000
+      },
+      {
+        "Price": 9700,
+        "Size": 583330000
+      },
+      {
+        "Price": 9800,
+        "Size": 874990000
+      },
+      {
+        "Price": 9880,
+        "Size": 3228010000
+      },
+      {
+        "Price": 9890,
+        "Size": 1257460000
+      },
+      {
+        "Price": 9900,
+        "Size": 2297920000
+      },
+      {
+        "Price": 9910,
+        "Size": 724310000
+      },
+      {
+        "Price": 9920,
+        "Size": 814850000
+      },
+      {
+        "Price": 9930,
+        "Size": 931250000
+      },
+      {
+        "Price": 9940,
+        "Size": 1086460000
+      },
+      {
+        "Price": 9950,
+        "Size": 1303760000
+      },
+      {
+        "Price": 9960,
+        "Size": 1635330000
+      },
+      {
+        "Price": 9970,
+        "Size": 2506260000
+      },
+      {
+        "Price": 9980,
+        "Size": 3759400000
+      },
+      {
+        "Price": 9990,
+        "Size": 7669000000
+      }
+    ],
+    "Timestamp": "2026-11-24T00:47:17.541Z",
+    "ReceivedAt": "2026-11-24T00:47:49.988127Z",
+    "Hash": "9b8ae0189197539c78442a9d08a375b6de9b6a66",
+    "TickSize": 10,
+    "MinOrderSize": 5000000,
+    "NegativeRisk": true
+  },
+  "polymarket_no_book": {
+    "AssetID": "28710667074546573950967540555397588811536101095018347378351884076627178457770",
+    "ConditionID": "0xf05d0481004c474391723b5d9ef037293706a1cac78209e811214295bbf8a3f8",
+    "Bids": [
+      {
+        "Price": 9970,
+        "Size": 148990000
+      },
+      {
+        "Price": 9960,
+        "Size": 300100000
+      },
+      {
+        "Price": 9950,
+        "Size": 138470000
+      },
+      {
+        "Price": 9940,
+        "Size": 59980000
+      },
+      {
+        "Price": 9910,
+        "Size": 149990000
+      },
+      {
+        "Price": 9900,
+        "Size": 220180000
+      },
+      {
+        "Price": 9800,
+        "Size": 22500000
+      },
+      {
+        "Price": 9710,
+        "Size": 250000000
+      },
+      {
+        "Price": 9700,
+        "Size": 5000000
+      },
+      {
+        "Price": 9510,
+        "Size": 40000000
+      },
+      {
+        "Price": 9500,
+        "Size": 5000000
+      },
+      {
+        "Price": 9440,
+        "Size": 20000000
+      },
+      {
+        "Price": 9350,
+        "Size": 240000000
+      },
+      {
+        "Price": 9340,
+        "Size": 340000000
+      },
+      {
+        "Price": 9290,
+        "Size": 45000000
+      },
+      {
+        "Price": 9280,
+        "Size": 20000000
+      },
+      {
+        "Price": 9170,
+        "Size": 134210000
+      },
+      {
+        "Price": 9140,
+        "Size": 52000000
+      },
+      {
+        "Price": 9130,
+        "Size": 161450000
+      },
+      {
+        "Price": 9060,
+        "Size": 50000000
+      },
+      {
+        "Price": 9050,
+        "Size": 80000000
+      },
+      {
+        "Price": 9040,
+        "Size": 132000000
+      },
+      {
+        "Price": 9000,
+        "Size": 17300000
+      },
+      {
+        "Price": 8840,
+        "Size": 35000000
+      },
+      {
+        "Price": 8830,
+        "Size": 50000000
+      },
+      {
+        "Price": 8750,
+        "Size": 100000000
+      },
+      {
+        "Price": 8740,
+        "Size": 269000000
+      },
+      {
+        "Price": 8640,
+        "Size": 61000000
+      },
+      {
+        "Price": 8550,
+        "Size": 220000000
+      },
+      {
+        "Price": 8540,
+        "Size": 324000000
+      },
+      {
+        "Price": 8440,
+        "Size": 70000000
+      },
+      {
+        "Price": 7410,
+        "Size": 400000000
+      },
+      {
+        "Price": 7400,
+        "Size": 220000000
+      },
+      {
+        "Price": 5280,
+        "Size": 220000000
+      },
+      {
+        "Price": 4110,
+        "Size": 220000000
+      },
+      {
+        "Price": 4100,
+        "Size": 175000000
+      },
+      {
+        "Price": 2220,
+        "Size": 96000000
+      },
+      {
+        "Price": 2020,
+        "Size": 607500000
+      },
+      {
+        "Price": 2010,
+        "Size": 3375000000
+      },
+      {
+        "Price": 2000,
+        "Size": 3000000000
+      },
+      {
+        "Price": 1990,
+        "Size": 251250000
+      },
+      {
+        "Price": 900,
+        "Size": 5000000
+      },
+      {
+        "Price": 410,
+        "Size": 16740000
+      },
+      {
+        "Price": 400,
+        "Size": 350000000
+      },
+      {
+        "Price": 300,
+        "Size": 583330000
+      },
+      {
+        "Price": 200,
+        "Size": 874990000
+      },
+      {
+        "Price": 120,
+        "Size": 3228010000
+      },
+      {
+        "Price": 110,
+        "Size": 1257460000
+      },
+      {
+        "Price": 100,
+        "Size": 2297920000
+      },
+      {
+        "Price": 90,
+        "Size": 724310000
+      },
+      {
+        "Price": 80,
+        "Size": 814850000
+      },
+      {
+        "Price": 70,
+        "Size": 931250000
+      },
+      {
+        "Price": 60,
+        "Size": 1086460000
+      },
+      {
+        "Price": 50,
+        "Size": 1303760000
+      },
+      {
+        "Price": 40,
+        "Size": 1635330000
+      },
+      {
+        "Price": 30,
+        "Size": 2506260000
+      },
+      {
+        "Price": 20,
+        "Size": 3759400000
+      },
+      {
+        "Price": 10,
+        "Size": 7669000000
+      }
+    ],
+    "Asks": [
+      {
+        "Price": 9990,
+        "Size": 17116310000
+      }
+    ],
+    "Timestamp": "2026-11-24T00:47:17.541Z",
+    "ReceivedAt": "2026-11-24T00:47:49.992203Z",
+    "Hash": "b486502576d96b43e7c3197eaf83ce38fc9976dd",
+    "TickSize": 10,
+    "MinOrderSize": 5000000,
+    "NegativeRisk": true
+  },
+  "kalshi_book": {
+    "Ticker": "KXCPIYOY-26NOV-T3.3",
+    "YesBids": [
+      {
+        "Price": 9900,
+        "Quantity": 287000
+      }
+    ],
+    "NoBids": [],
+    "ReceivedAt": "2026-11-24T00:47:49.849714Z"
+  },
+  "conditional_scenarios": [
+    {
+      "polymarket_side": "YES",
+      "kalshi_side": "YES",
+      "status": "unavailable",
+      "requested_whole_units": 5,
+      "max_whole_units_at_top": 0,
+      "polymarket_ask": "$0.0030",
+      "kalshi_ask": "unavailable",
+      "reason": "Missing ask liquidity"
+    },
+    {
+      "polymarket_side": "NO",
+      "kalshi_side": "NO",
+      "status": "conditional_only",
+      "requested_whole_units": 5,
+      "max_whole_units_at_top": 2870,
+      "polymarket_ask": "$0.9990",
+      "kalshi_ask": "$0.0100",
+      "premium_usd": "5.04500",
+      "polymarket_fee_estimate_usd": "0.00005",
+      "kalshi_fee_estimate_usd": "0.00350",
+      "total_estimate_usd": "5.04855",
+      "conditional_payout_usd": "5.00000",
+      "conditional_payout_minus_cost_usd": "-0.04855",
+      "reason": "Payout assumes the stated outcome relation holds and both legs fill; contract equivalence is unverified"
+    }
+  ],
+  "research_notes": {
+    "conclusion": "No genuinely equivalent pair or verified arbitrage established. CPI ordinary-release predicates are inverted, but exceptional settlement rules differ.",
+    "cpi_normal_release": "Both reference the BLS one-decimal non-seasonally-adjusted headline CPI year-over-year figure for November 2026; <=3.3% versus >3.3%.",
+    "cpi_exception": "Polymarket may use the latest previous month if November data are not released by the next report; Kalshi metadata extends for government shutdown, and the linked template terms describe a separate unavailable-data fallback. This prevents unconditional equivalence.",
+    "fed_candidate": "Polymarket 3215007 and Kalshi KXFEDDECISION-26DEC-H0 both concern December 2026 no-change, but cancellation/delayed-statement policies differ. Not verified.",
+    "sources": [
+      "https://gamma-api.polymarket.com/markets/7004029",
+      "https://external-api.kalshi.com/trade-api/v2/markets/KXCPIYOY-26NOV-T3.3",
+      "https://assets.kalshi.com/contract_terms/YOYCPI.pdf",
+      "https://gamma-api.polymarket.com/markets/3215007",
+      "https://external-api.kalshi.com/trade-api/v2/markets/KXFEDDECISION-26DEC-H0",
+      "https://assets.kalshi.com/contract_terms/FEDDECISION.pdf",
+      "https://docs.polymarket.com/trading/fees",
+      "https://kalshi.com/docs/kalshi-fee-schedule.pdf"
+    ]
+  }
+}
