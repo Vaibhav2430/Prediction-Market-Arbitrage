@@ -1,4 +1,4 @@
-// Scanner prints read-only, indicative Gamma market prices.
+// Scanner prints read-only market data from Polymarket or Kalshi.
 package main
 
 import (
@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/kalshi"
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/models"
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/polymarket"
 )
@@ -28,7 +29,12 @@ func main() {
 func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	flags := flag.NewFlagSet("scanner", flag.ContinueOnError)
 	flags.SetOutput(errOut)
-	limit := flags.Int("limit", 20, "API records per page (1..100)")
+	limit := flags.Int("limit", 20, "API records per page (Polymarket 1..100; Kalshi 1..1000)")
+	venue := flags.String("venue", "polymarket", "data source: polymarket or kalshi")
+	cursor := flags.String("cursor", "", "Kalshi next-page cursor")
+	series := flags.String("series", "", "Kalshi series ticker filter")
+	ticker := flags.String("ticker", "", "Kalshi single market ticker (instead of discovery)")
+	depth := flags.Int("depth", 5, "Kalshi order-book levels per side (0=all; 1..100)")
 	offset := flags.Int("offset", 0, "API record offset (one page per run)")
 	timeout := flags.Duration("timeout", 30*time.Second, "overall timeout (each HTTP request also has a 10s timeout)")
 	if err := flags.Parse(args); err != nil {
@@ -43,8 +49,28 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	if *timeout <= 0 {
 		return fmt.Errorf("timeout must be positive")
 	}
+	if *venue != "polymarket" && *venue != "kalshi" {
+		return fmt.Errorf("venue must be polymarket or kalshi")
+	}
+	if *venue == "polymarket" && (*cursor != "" || *series != "" || *ticker != "") {
+		return fmt.Errorf("cursor, series, and ticker require -venue kalshi")
+	}
+	if *venue == "kalshi" {
+		if *offset != 0 {
+			return fmt.Errorf("Kalshi uses -cursor rather than -offset")
+		}
+		if *limit < 1 || *limit > 1000 || *depth < 0 || *depth > 100 {
+			return fmt.Errorf("Kalshi limit must be 1..1000 and depth must be 0..100")
+		}
+		if *ticker != "" && (*cursor != "" || *series != "") {
+			return fmt.Errorf("ticker cannot be combined with cursor or series")
+		}
+	}
 	ctx, cancel := context.WithTimeout(ctx, *timeout)
 	defer cancel()
+	if *venue == "kalshi" {
+		return scanKalshi(ctx, kalshi.NewClient(), kalshiOptions{limit: *limit, depth: *depth, cursor: *cursor, series: *series, ticker: *ticker}, out, errOut)
+	}
 	result, err := polymarket.NewClient().FetchActiveMarkets(ctx, *limit, *offset)
 	if err != nil {
 		return err
