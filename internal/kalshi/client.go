@@ -33,17 +33,20 @@ func NewClient() *Client {
 // Market retains settlement context for future manual contract matching.
 // Listing quote fields are deliberately not treated as order-book liquidity.
 type Market struct {
-	Ticker         string          `json:"ticker"`
-	EventTicker    string          `json:"event_ticker"`
-	Title          string          `json:"title"`
-	YesSubtitle    string          `json:"yes_sub_title"`
-	NoSubtitle     string          `json:"no_sub_title"`
-	Status         string          `json:"status"`
-	Type           string          `json:"market_type"`
-	CloseTime      time.Time       `json:"close_time"`
-	RulesPrimary   string          `json:"rules_primary"`
-	RulesSecondary string          `json:"rules_secondary"`
-	Notional       json.RawMessage `json:"notional_value_dollars"`
+	Ticker              string          `json:"ticker"`
+	EventTicker         string          `json:"event_ticker"`
+	Title               string          `json:"title"`
+	YesSubtitle         string          `json:"yes_sub_title"`
+	NoSubtitle          string          `json:"no_sub_title"`
+	Status              string          `json:"status"`
+	Type                string          `json:"market_type"`
+	CloseTime           time.Time       `json:"close_time"`
+	ExpectedExpiration  string          `json:"expected_expiration_time"`
+	LatestExpiration    string          `json:"latest_expiration_time"`
+	EarlyCloseCondition string          `json:"early_close_condition"`
+	RulesPrimary        string          `json:"rules_primary"`
+	RulesSecondary      string          `json:"rules_secondary"`
+	Notional            json.RawMessage `json:"notional_value_dollars"`
 }
 
 type MarketPage struct {

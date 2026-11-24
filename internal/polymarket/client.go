@@ -96,17 +96,23 @@ func (c *Client) FetchActiveMarkets(ctx context.Context, limit, offset int) (Res
 }
 
 type gammaMarket struct {
-	ID          string          `json:"id"`
-	Question    string          `json:"question"`
-	Slug        string          `json:"slug"`
-	ConditionID string          `json:"conditionId"`
-	Active      *bool           `json:"active"`
-	Closed      *bool           `json:"closed"`
-	Outcomes    json.RawMessage `json:"outcomes"`
-	Prices      json.RawMessage `json:"outcomePrices"`
-	TokenIDs    json.RawMessage `json:"clobTokenIds"`
-	PositionIDs json.RawMessage `json:"positionIds"`
-	Version     string          `json:"version"`
+	ID               string          `json:"id"`
+	Question         string          `json:"question"`
+	Slug             string          `json:"slug"`
+	ConditionID      string          `json:"conditionId"`
+	Active           *bool           `json:"active"`
+	Closed           *bool           `json:"closed"`
+	Outcomes         json.RawMessage `json:"outcomes"`
+	Prices           json.RawMessage `json:"outcomePrices"`
+	TokenIDs         json.RawMessage `json:"clobTokenIds"`
+	PositionIDs      json.RawMessage `json:"positionIds"`
+	Version          string          `json:"version"`
+	Description      string          `json:"description"`
+	EndDate          string          `json:"endDate"`
+	ResolutionSource string          `json:"resolutionSource"`
+	Events           []struct {
+		Title string `json:"title"`
+	} `json:"events"`
 }
 
 // arrayField supports Gamma's JSON-encoded strings and native JSON arrays.
@@ -161,7 +167,12 @@ func parseMarket(record json.RawMessage) (models.Market, bool, error) {
 	if len(labels) < 2 || (len(prices) != 0 && len(prices) != len(labels)) || (len(tokens) != 0 && len(tokens) != len(labels)) {
 		return market, false, fmt.Errorf("market %s missing outcomes or mismatched outcome/price/token lengths", wire.ID)
 	}
-	market = models.Market{ID: wire.ID, Question: wire.Question, Slug: wire.Slug, ConditionID: wire.ConditionID}
+	market = models.Market{ID: wire.ID, Question: wire.Question, Slug: wire.Slug, ConditionID: wire.ConditionID, Description: wire.Description, EndDate: wire.EndDate, ResolutionSource: wire.ResolutionSource}
+	for _, event := range wire.Events {
+		if strings.TrimSpace(event.Title) != "" {
+			market.EventTitles = append(market.EventTitles, event.Title)
+		}
+	}
 	seen := make(map[string]bool)
 	for i, label := range labels {
 		key := strings.ToLower(strings.TrimSpace(label))

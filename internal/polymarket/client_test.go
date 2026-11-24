@@ -184,3 +184,13 @@ func TestCancellationAndTimeout(t *testing.T) {
 		}
 	})
 }
+
+func TestSettlementMetadataPreserved(t *testing.T) {
+	market, include, err := parseMarket(record(map[string]any{
+		"description": "Full resolution rules\nincluding exceptions", "endDate": "2027-01-01T00:00:00Z", "resolutionSource": "https://example.com/source",
+		"events": []map[string]any{{"title": "Election 2026"}},
+	}))
+	if err != nil || !include || market.Description != "Full resolution rules\nincluding exceptions" || market.EndDate != "2027-01-01T00:00:00Z" || market.ResolutionSource != "https://example.com/source" || len(market.EventTitles) != 1 {
+		t.Fatalf("market=%+v err=%v", market, err)
+	}
+}

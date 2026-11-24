@@ -7,7 +7,8 @@ Real-time cross-platform arbitrage detection engine for Polymarket and Kalshi, b
 The backend discovers active Polymarket markets through Gamma and fetches
 public CLOB order books for their YES and NO assets. Kalshi market discovery
 and order books are available with `-venue kalshi`. No credentials are needed.
-The scanner does not place orders, match contracts, or detect arbitrage.
+The scanner does not place orders or detect arbitrage. A separate matcher
+ranks potential contract pairs for manual review; it never verifies equivalence.
 
 ```sh
 go run ./cmd/scanner -limit 3 -offset 0
@@ -144,3 +145,57 @@ replaced with an indicative price. Credentials and trading are not used.
 
 API references: [CLOB order book](https://docs.polymarket.com/api-reference/market-data/get-order-book)
 and [prices and order books](https://docs.polymarket.com/market-data/prices-order-books).
+
+
+## Candidate market matching (manual review)
+
+```sh
+# Default: up to three pages of 100 API records from each platform:
+go run ./cmd/matcher
+# Focus the sampled metadata on a topic and show up to 10 candidate pairs:
+go run ./cmd/matcher -pages 5 -query bitcoin -top 10
+# Continue discovery from a known offset/cursor or filter Kalshi to a series:
+go run ./cmd/matcher -polymarket-offset 300 -kalshi-series KXBTC
+# Full original metadata and warnings in structured output:
+go run ./cmd/matcher -format json > candidates.json
+```
+
+The matcher uses public metadata only: it does not fetch order books, compare
+prices, calculate arbitrage, or trade. Every candidate has `status=needs_review`,
+including identical titles or rules. There is no automatically verified state.
+A shared YES/NO label does not establish that the YES predicates align.
+
+Candidates are ranked by lexical Dice overlap, taking the higher overlap of
+title words and title plus event/YES-label context. At least two distinct shared
+non-numeric terms are required. Common grammatical words and generic market
+terms are ignored. The default `-min-score` is 0.45; scores are text similarity,
+not probabilities or confidence in equivalence. This heuristic can miss aliases,
+synonyms, and short titles, or suggest unrelated contracts sharing generic words.
+It does not understand full settlement-rule semantics.
+
+The text report wraps original titles, event details, outcome labels, deadlines,
+and full primary/secondary rules in side-by-side columns without truncation.
+JSON preserves raw text. Polymarket's Gamma description supplies its rules;
+Kalshi's primary/secondary rules are retained along with expected/latest expiry
+and early-close conditions when provided. Missing fields display as unavailable.
+Numeric differences, directional/negative wording, missing metadata, imprecise
+or differing deadlines are flagged. Gamma `endDate` and Kalshi `close_time` are
+explicitly distinguished: matching timestamps are not evidence that event
+cutoffs or resolution windows are equivalent. Review sources, thresholds,
+postponements, cancellations, and exceptional settlement outcomes in full.
+
+Discovery is bounded to `-pages` (1..10) of `-page-size` (1..100) per venue.
+Records are deduplicated by venue ID. Kalshi stops at an empty or repeated
+cursor. Gamma uses fixed offsets; retained record counts do not imply a complete
+API page because the client filters invalid records. Reports include scanned
+counts and continuation offsets/cursors. `-query` is a case-insensitive local
+substring filter on sampled metadata on both platforms, not a remote catalog
+search. The platforms have different listing orders; default pages may have
+no overlapping events. No results means no candidates in this sample, not no
+matches or arbitrage in the full catalogs.
+
+`-top` (1..50) bounds returned pairs and ranking memory. Requests inherit the
+existing 10-second timeout and 4 MiB cap; `-timeout` (default 30s) covers discovery
+and comparison. Ctrl-C cancels work. Individual malformed records warn; a failed
+discovery request aborts without publishing a partial candidate report.
+Existing `cmd/scanner` modes are unchanged. No credentials or trading are used.

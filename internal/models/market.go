@@ -14,11 +14,15 @@ type Outcome struct {
 }
 
 type Market struct {
-	ID          string
-	Question    string
-	Slug        string
-	ConditionID string
-	Outcomes    []Outcome
+	ID               string
+	Question         string
+	Slug             string
+	ConditionID      string
+	Outcomes         []Outcome
+	Description      string
+	EndDate          string
+	ResolutionSource string
+	EventTitles      []string
 }
 
 // YesNo returns prices by outcome label, never by assumed array position.
