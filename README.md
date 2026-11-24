@@ -341,3 +341,57 @@ Sources: [Polymarket fee formula and precision](https://docs.polymarket.com/trad
 [Kalshi current fee schedule](https://kalshi.com/fee-schedule),
 [Kalshi fee formula PDF](https://kalshi.com/docs/kalshi-fee-schedule.pdf), and
 [Kalshi CPI contract terms](https://assets.kalshi.com/contract_terms/YOYCPI.pdf).
+
+
+## Reviewed-pair registry
+
+`data/reviewed-pairs.json` is a versioned, manually reviewed shortlist. It records
+contract IDs, same/inverted YES mapping, original rule snapshots, source and
+binding-term identities, SHA-256 fingerprints, reviewer/evidence fields, and
+unresolved findings. Current entries are research records: the CPI pair is
+rejected and the Newsom nomination pair needs further timing/exception review.
+No entry is silently promoted to approved because titles or predicates match.
+
+```sh
+# Refresh current rules for all registry entries:
+go run ./cmd/reviewed
+# Refresh one entry:
+go run ./cmd/reviewed -pair-id newsom-democratic-nominee-2028
+# Capture a draft entry to stdout for review (does not edit the registry):
+go run ./cmd/reviewed -capture -pair-id my-pair -polymarket-id 559652 -kalshi-ticker KXPRESNOMD-28-GN -relation same
+```
+
+A captured entry is always `needs_review`. Approval is a manual research
+judgment, recorded with reviewer, timestamp, and explicit evidence for outcome,
+timing, exceptional settlement, and sources; unresolved findings prohibit
+approval. The file is not an authenticated approval system. Nonempty evidence
+fields do not prove that a reviewer is correct. Do not approve merely to enable
+quote calculations. The supplied registry deliberately contains no approved
+pairs while material uncertainties remain.
+
+The fingerprint covers original titles/rules, displayed deadlines and expiry
+conditions, source identities, contract/asset IDs, outcome mapping, and the
+bytes of the linked Kalshi binding-terms PDF. Binding terms are fetched only
+from HTTPS `assets.kalshi.com/contract_terms/` URLs, with bounded size, timeout,
+and redirects. Fees, liquidity and prices are excluded from the fingerprint;
+fee parameters are refreshed before approved quotes are priced. This watches
+the captured market/terms inputs, not every referenced rulebook or source webpage.
+Review platform-wide rule changes separately. Byte-level PDF
+or cosmetic rule changes conservatively invalidate the saved review too.
+
+Rejected entries never fetch quotes. Pending entries refresh rules but withhold
+quotes. Approved entries refresh rules and terms first: a changed fingerprint
+returns `rules_changed`, and failed rule retrieval returns `unverifiable`;
+both withhold pricing. The tool never updates a saved fingerprint or review
+status automatically. Recapture and review material changes before replacing
+an entry. The JSON reader rejects unknown fields, duplicate IDs, bad hashes,
+invalid versions, and incomplete approval evidence.
+
+Only `approved_rules_current` entries fetch concurrent books and fee metadata.
+Existing exact cost/fee, outcome-mapping, minimum-size, top-of-book quantity,
+and freshness checks apply. Quote changes do not invalidate approval; stale
+quotes withhold the comparison. Kalshi's REST response still lacks an exchange
+timestamp. Any payout-minus-cost result remains conditional on fills, collateral
+parity, fee behavior, and the validity of the manual settlement review. Approval
+is not a guaranteed-profit claim. This command never places orders or accesses
+credentials. Existing matcher, scanner and paircheck commands are unchanged.

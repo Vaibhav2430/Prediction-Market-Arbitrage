@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "newsom-democratic-nominee-2028",
+      "status": "needs_review",
+      "yes_relation": "same",
+      "rules_fingerprint": "742d883ef85c2dfa251332b372a2800e3e085d82493d03951ed035591f728270",
+      "reviewed_snapshot": {
+        "polymarket": {
+          "venue": "polymarket",
+          "id": "559652",
+          "title": "Will Gavin Newsom win the 2028 Democratic presidential nomination?",
+          "event": "",
+          "yes_label": "Yes",
+          "no_label": "No",
+          "deadline": "2028-11-08T04:59:00Z",
+          "deadline_kind": "Gamma endDate",
+          "rules_primary": "This market will resolve to \u201cYes\u201d if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to \u201cNo\u201d.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market."
+        },
+        "polymarket_condition_id": "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
+        "polymarket_outcomes": [
+          {
+            "name": "Yes",
+            "asset_id": "54533043819946592547517511176940999955633860128497669742211153063842200957669"
+          },
+          {
+            "name": "No",
+            "asset_id": "87854174148074652060467921081181402357467303721471806610111179101805869578687"
+          }
+        ],
+        "kalshi": {
+          "venue": "kalshi",
+          "id": "KXPRESNOMD-28-GN",
+          "title": "Will Gavin Newsom be the Democratic Presidential nominee in 2028?",
+          "event": "KXPRESNOMD-28",
+          "yes_label": "Gavin Newsom",
+          "no_label": "Gavin Newsom",
+          "deadline": "2028-11-07T15:00:00Z",
+          "deadline_kind": "trading close_time",
+          "expected_expiration": "2028-11-07T15:00:00Z",
+          "latest_expiration": "2028-11-07T15:00:00Z",
+          "early_close_condition": "This market will close after the Democratic party nominates an individual for the Presidency and they accept that nomination.",
+          "rules_primary": "If Gavin Newsom wins and accepts the nomination for the Presidency for the Democratic party in 2028, then the market resolves to Yes."
+        },
+        "kalshi_sources": {
+          "event_ticker": "KXPRESNOMD-28",
+          "series_ticker": "KXPRESNOMD",
+          "terms_url": "https://assets.kalshi.com/contract_terms/PRESNOM.pdf",
+          "event_sources": [
+            {
+              "name": "Democratic Party",
+              "url": "https://democrats.org/"
+            }
+          ],
+          "series_sources": [
+            {
+              "name": "Republican Party",
+              "url": "https://gop.com/"
+            },
+            {
+              "name": "Democratic Party",
+              "url": "https://democrats.org/"
+            }
+          ]
+        },
+        "terms_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
+      },
+      "review": {
+        "reviewer": "Codex research (not approval)",
+        "reviewed_at": "2026-11-24T00:59:25.259711Z",
+        "outcome_evidence": "Both current primary descriptions require Gavin Newsom to win and accept the Democratic Party presidential nomination for 2028; same YES direction. Kalshi linked PRESNOM terms use the first nominated person who accepts. Polymarket explicitly states later nominee replacement does not change resolution.",
+        "timing_evidence": "Both can resolve after nomination acceptance, but Kalshi lists terminal expiration 2028-11-07T15:00:00Z and Polymarket endDate is 2028-11-08T04:59:00Z. These are not assumed to be interchangeable event cutoffs.",
+        "exception_evidence": "Replacement handling appears aligned in the ordinary accepted-nomination case. No-accepted-nominee and acceptance near the differing terminal dates are not established as equivalent. Kalshi binding terms retain outcome-review discretion.",
+        "source_evidence": "Polymarket specifies consensus of official Democratic Party sources. Kalshi event settlement_sources identifies Democratic Party; linked series terms identify the political party as source agency.",
+        "findings": [
+          "Resolve no-accepted-nominee and late-acceptance outcomes across the differing terminal times before approval.",
+          "Confirm governing platform-wide cancellation/dispute rules; matching predicates alone is insufficient."
+        ],
+        "residual_risks": [
+          "Different platform adjudication and payout timing.",
+          "Separate execution and collateral-to-USD parity.",
+          "Fingerprint covers captured inputs, not every referenced rulebook or source webpage."
+        ]
+      }
+    },
+    {
+      "id": "november-cpi-2026-threshold",
+      "status": "rejected",
+      "yes_relation": "inverted",
+      "rules_fingerprint": "5d749edb3c05f4389f0bd881f7197f4d7a92fb96efefbec090b6e10cf67a1615",
+      "reviewed_snapshot": {
+        "polymarket": {
+          "venue": "polymarket",
+          "id": "7004029",
+          "title": "Will annual inflation be 3.3% or less in November?",
+          "event": "",
+          "yes_label": "Yes",
+          "no_label": "No",
+          "deadline": "2026-12-10T13:30:00Z",
+          "deadline_kind": "Gamma endDate",
+          "rules_primary": "This is a market about inflation over the 12-month period ending November 2026, before seasonal adjustment, as reported by the Bureau of Labor Statistics.\n\nThis market will resolve to the percentage change in the Consumer Price Index (CPI) over the 12-month period ending in November 2026 according to the monthly Bureau of Labor Statistics (BLS) report.\n\nThe resolution source for this market will be the BLS Consumer Price Index report released for November 2026 (https://www.bls.gov/bls/news-release/cpi.htm), currently scheduled to be released on December 10, 2026, at 8:30 AM ET. Resolution of this market will take place upon release of the aforementioned data.\n\nNote: the resolution source for this market will be the official monthly BLS CPI news release, which reports inflation over 12-month periods to only one decimal point (e.g., 2.9%). Thus, this is the level of precision that will be used when resolving the market.\n\nIf the BLS does not release the relevant figures on the scheduled date, this market may remain open up until the scheduled release time of the next CPI report (https://www.bls.gov/schedule). If the information is not released by that time, this market will resolve according to the figures of the most recent previous month with available data.",
+          "resolution_source": "https://www.bls.gov/bls/news-release/cpi.htm"
+        },
+        "polymarket_condition_id": "0xf05d0481004c474391723b5d9ef037293706a1cac78209e811214295bbf8a3f8",
+        "polymarket_outcomes": [
+          {
+            "name": "Yes",
+            "asset_id": "42598461525817146792953952193813644928334698325321505460685085428993863996611"
+          },
+          {
+            "name": "No",
+            "asset_id": "28710667074546573950967540555397588811536101095018347378351884076627178457770"
+          }
+        ],
+        "kalshi": {
+          "venue": "kalshi",
+          "id": "KXCPIYOY-26NOV-T3.3",
+          "title": "Will the rate of CPI inflation be above 3.3% for the year ending in November 2026?",
+          "event": "KXCPIYOY-26NOV",
+          "yes_label": "Above 3.3%",
+          "no_label": "Above 3.3%",
+          "deadline": "2026-12-10T13:29:00Z",
+          "deadline_kind": "trading close_time",
+          "expected_expiration": "2026-12-10T15:00:00Z",
+          "latest_expiration": "2027-03-11T15:00:00Z",
+          "rules_primary": "If the Consumer Price Index (CPI) increases by more than 3.3% in the twelve months ending November 2026 (as represented by the one-decimal place value reported by the Bureau of Labor Statistics), then the market resolves to Yes.",
+          "rules_secondary": "In the case of a delay in data caused by a federal government shutdown impacting the reliability of the Source Agency, the market\u2019s latest Expiration Date will be extended to the sooner of the release of the Underlying or six months after the end of the government shutdown"
+        },
+        "kalshi_sources": {
+          "event_ticker": "KXCPIYOY-26NOV",
+          "series_ticker": "KXCPIYOY",
+          "terms_url": "https://assets.kalshi.com/contract_terms/YOYCPI.pdf",
+          "event_sources": [
+            {
+              "name": "Bureau of Labor Statistics",
+              "url": "https://www.bls.gov/cpi/"
+            }
+          ],
+          "series_sources": [
+            {
+              "name": "Bureau of Labor Statistics",
+              "url": "https://www.bls.gov/cpi/"
+            }
+          ]
+        },
+        "terms_sha256": "f16b89ea360ce49142ada62c06e9a9c7f7b1451ea88baab6b223656cb73f6660"
+      },
+      "review": {
+        "reviewer": "Codex research (rejection)",
+        "reviewed_at": "2026-11-24T00:59:25.259711Z",
+        "outcome_evidence": "In the ordinary November 2026 BLS headline CPI release at one-decimal precision, Polymarket YES <=3.3% and Kalshi YES >3.3% are inverted.",
+        "timing_evidence": "Both concern the November reference month, but release-delay settlement windows differ.",
+        "exception_evidence": "Polymarket may fall back to the previous month if November figures remain unavailable by the next release. Kalshi metadata extends settlement for a government shutdown and linked template terms specify a different unavailable-data fallback. Not unconditional complements.",
+        "source_evidence": "Both refer to the Bureau of Labor Statistics headline non-seasonally-adjusted annual CPI figure in ordinary conditions.",
+        "findings": [
+          "Incompatible delayed/unavailable-release rules; do not approve as an equivalent pair."
+        ],
+        "residual_risks": [
+          "Rules can differ even when normal-release predicates and thresholds align."
+        ]
+      }
+    }
+  ]
+}
