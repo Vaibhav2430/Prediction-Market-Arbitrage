@@ -2,17 +2,19 @@
 Real-time cross-platform arbitrage detection engine for Polymarket and Kalshi, built with Go and WebSockets.
 
 
-## Initial read-only Go scanner
+## Read-only Go scanner
 
-The current backend fetches one bounded page of active, open Polymarket
-markets from the public Gamma API. It requires no credentials, places no
-orders, and does not yet match contracts or detect executable arbitrage.
-Kalshi public market discovery and order books are available with `-venue kalshi`.
+The backend discovers active Polymarket markets through Gamma and fetches
+public CLOB order books for their YES and NO assets. Kalshi market discovery
+and order books are available with `-venue kalshi`. No credentials are needed.
+The scanner does not place orders, match contracts, or detect arbitrage.
 
 ```sh
-go run ./cmd/scanner -limit 20 -offset 0
+go run ./cmd/scanner -limit 3 -offset 0
 # Next API page (offset counts API records, including omitted/invalid records):
-go run ./cmd/scanner -limit 20 -offset 20 -timeout 30s
+go run ./cmd/scanner -limit 3 -offset 3 -timeout 30s
+# Original Gamma-only view (no order-book requests):
+go run ./cmd/scanner -indicative -limit 20
 ```
 
 Use the Go version declared in `go.mod` (currently Go 1.27.4). There are no
@@ -21,7 +23,7 @@ third-party dependencies. Each HTTP request has a 10-second timeout; the
 and invalid top-level responses fail the run. Invalid individual records
 produce warnings on stderr while valid records remain available.
 
-Prices are **indicative Gamma `outcomePrices`, not executable bid/ask quotes**.
+With `-indicative`, prices are **Gamma `outcomePrices`, not executable bid/ask quotes**.
 They do not account for order-book depth, fees, slippage, or data freshness.
 YES/NO labels are matched by name rather than array position. Missing prices
 appear as `unavailable`; non-YES/NO markets are counted and omitted. A page
@@ -92,10 +94,53 @@ invalid response envelopes, and deadlines fail the run.
 
 Quotes are snapshots, may be cached, exclude fees, and do not guarantee a fill.
 The displayed receipt time is local, not an exchange timestamp. Polymarket
-continues to show indicative Gamma prices; this update does not yet implement
-Polymarket CLOB order books, cross-platform matching, or arbitrage detection.
+uses actual CLOB bid/ask snapshots by default, with `-indicative` available for
+Gamma-only output. Cross-platform matching and arbitrage detection remain
+unimplemented.
 No credentials, account operations, or trading are used.
 
 API references: [public market data](https://docs.kalshi.com/getting_started/quick_start_market_data),
 [markets](https://docs.kalshi.com/api-reference/market/get-markets), and
 [order books](https://docs.kalshi.com/api-reference/market/get-market-orderbook).
+
+
+## Polymarket CLOB order books
+
+```sh
+# Default: discover a page, then fetch the actual YES and NO books:
+go run ./cmd/scanner -venue polymarket -limit 3
+# Gamma-only indicative prices, preserving the earlier scanner mode:
+go run ./cmd/scanner -venue polymarket -indicative -limit 20
+```
+
+The scanner matches YES/NO by outcome label and requests `GET /book?token_id=...`
+from `https://clob.polymarket.com` for each asset. It uses `clobTokenIds` for CTF
+markets and `positionIds` for markets marked `version=v2`. Asset IDs and market
+condition IDs are checked against Gamma; missing, duplicated, or mismatched
+identifiers fail the affected market with a warning. One-sided and empty books
+remain unavailable on their missing sides. No quotes are inferred from Gamma
+prices or from the opposite outcome's book.
+
+Prices are exact $0.0001 units and share sizes are exact millionths of a share.
+Excess significant decimal precision, negatives, nonfinite values, overflow,
+duplicate levels, off-tick prices, and crossed bid/ask books are rejected.
+Trailing decimal zeroes are accepted without rounding. Bid levels are sorted
+highest first and asks lowest first, independent of server ordering.
+
+The CLI displays the best bid and ask with their sizes, the API snapshot time,
+local receipt time, snapshot age at receipt, tick size, and minimum order size.
+A displayed level can be smaller than the minimum order size; it is not a
+promise that an order of that size can be placed or filled. Quotes exclude
+fees and can change. A snapshot timestamp is not a freshness guarantee, and
+YES/NO reads are separate snapshots rather than an atomic pair. Full depth is
+retained by the client; `-depth` continues to apply only to Kalshi requests.
+
+Each request has a 10-second timeout and a 4 MiB response cap. The overall
+`-timeout` covers discovery and both sequential book reads per market; use a
+small `-limit` for quick snapshots. There are no automatic retries. Book HTTP
+or validation failures warn, preserve any successful side's output, and result
+in a nonzero exit with an incomplete-data summary. A missing book is never
+replaced with an indicative price. Credentials and trading are not used.
+
+API references: [CLOB order book](https://docs.polymarket.com/api-reference/market-data/get-order-book)
+and [prices and order books](https://docs.polymarket.com/market-data/prices-order-books).

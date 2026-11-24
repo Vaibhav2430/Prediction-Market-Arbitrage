@@ -105,6 +105,8 @@ type gammaMarket struct {
 	Outcomes    json.RawMessage `json:"outcomes"`
 	Prices      json.RawMessage `json:"outcomePrices"`
 	TokenIDs    json.RawMessage `json:"clobTokenIds"`
+	PositionIDs json.RawMessage `json:"positionIds"`
+	Version     string          `json:"version"`
 }
 
 // arrayField supports Gamma's JSON-encoded strings and native JSON arrays.
@@ -149,8 +151,12 @@ func parseMarket(record json.RawMessage) (models.Market, bool, error) {
 	if err := arrayField(wire.Prices, &prices); err != nil {
 		return market, false, fmt.Errorf("market %s outcomePrices: %w", wire.ID, err)
 	}
-	if err := arrayField(wire.TokenIDs, &tokens); err != nil {
-		return market, false, fmt.Errorf("market %s clobTokenIds: %w", wire.ID, err)
+	assetIDs := wire.TokenIDs
+	if strings.EqualFold(wire.Version, "v2") {
+		assetIDs = wire.PositionIDs
+	}
+	if err := arrayField(assetIDs, &tokens); err != nil {
+		return market, false, fmt.Errorf("market %s trading asset IDs: %w", wire.ID, err)
 	}
 	if len(labels) < 2 || (len(prices) != 0 && len(prices) != len(labels)) || (len(tokens) != 0 && len(tokens) != len(labels)) {
 		return market, false, fmt.Errorf("market %s missing outcomes or mismatched outcome/price/token lengths", wire.ID)

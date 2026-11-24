@@ -30,6 +30,7 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	flags := flag.NewFlagSet("scanner", flag.ContinueOnError)
 	flags.SetOutput(errOut)
 	limit := flags.Int("limit", 20, "API records per page (Polymarket 1..100; Kalshi 1..1000)")
+	indicative := flags.Bool("indicative", false, "Polymarket: show Gamma indicative prices instead of CLOB order books")
 	venue := flags.String("venue", "polymarket", "data source: polymarket or kalshi")
 	cursor := flags.String("cursor", "", "Kalshi next-page cursor")
 	series := flags.String("series", "", "Kalshi series ticker filter")
@@ -56,6 +57,9 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 		return fmt.Errorf("cursor, series, and ticker require -venue kalshi")
 	}
 	if *venue == "kalshi" {
+		if *indicative {
+			return fmt.Errorf("indicative requires -venue polymarket")
+		}
 		if *offset != 0 {
 			return fmt.Errorf("Kalshi uses -cursor rather than -offset")
 		}
@@ -70,6 +74,9 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	defer cancel()
 	if *venue == "kalshi" {
 		return scanKalshi(ctx, kalshi.NewClient(), kalshiOptions{limit: *limit, depth: *depth, cursor: *cursor, series: *series, ticker: *ticker}, out, errOut)
+	}
+	if !*indicative {
+		return scanPolymarket(ctx, polymarket.NewClient(), polymarket.NewBookClient(), *limit, *offset, out, errOut)
 	}
 	result, err := polymarket.NewClient().FetchActiveMarkets(ctx, *limit, *offset)
 	if err != nil {
