@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -27,23 +28,39 @@ type kalshiReader interface {
 	FetchOpenMarkets(context.Context, int, string, string) (kalshi.MarketPage, error)
 }
 type options struct {
-	pages, size, offset, top      int
-	threshold                     float64
-	query, series, cursor, format string
-	timeout                       time.Duration
+	pages, size, offset, top           int
+	threshold                          float64
+	query, series, cursor, format      string
+	timeout                            time.Duration
+	topic, category, after, before     string
+	maxSeries, topicEvents, searchPage int
 }
 type report struct {
-	Status               string               `json:"status"`
-	Note                 string               `json:"note"`
-	PolymarketMarkets    int                  `json:"polymarket_markets"`
-	KalshiMarkets        int                  `json:"kalshi_markets"`
-	PolymarketPages      int                  `json:"polymarket_pages"`
-	KalshiPages          int                  `json:"kalshi_pages"`
-	NextPolymarketOffset int                  `json:"next_polymarket_offset"`
-	NextKalshiCursor     string               `json:"next_kalshi_cursor"`
-	Warnings             []string             `json:"warnings"`
-	CandidateCount       int                  `json:"candidate_count"`
-	Candidates           []matching.Candidate `json:"candidates"`
+	Topic                   string               `json:"topic,omitempty"`
+	KalshiCategory          string               `json:"kalshi_category,omitempty"`
+	KalshiSeries            []kalshi.Series      `json:"kalshi_series,omitempty"`
+	KalshiSeriesMatched     int                  `json:"kalshi_series_matched,omitempty"`
+	KalshiSeriesCursors     map[string]string    `json:"kalshi_series_cursors,omitempty"`
+	NextSearchPage          int                  `json:"next_polymarket_search_page,omitempty"`
+	PolymarketSearchHasMore bool                 `json:"polymarket_search_has_more"`
+	WindowAfter             string               `json:"deadline_after,omitempty"`
+	WindowBefore            string               `json:"deadline_before,omitempty"`
+	WindowOmittedPolymarket int                  `json:"window_omitted_polymarket"`
+	WindowOmittedKalshi     int                  `json:"window_omitted_kalshi"`
+	PolymarketCapped        bool                 `json:"polymarket_capped"`
+	KalshiCapped            bool                 `json:"kalshi_capped"`
+	Status                  string               `json:"status"`
+	Note                    string               `json:"note"`
+	PolymarketMarkets       int                  `json:"polymarket_markets"`
+	KalshiMarkets           int                  `json:"kalshi_markets"`
+	PolymarketPages         int                  `json:"polymarket_pages"`
+	KalshiPages             int                  `json:"kalshi_pages"`
+	NextPolymarketOffset    int                  `json:"next_polymarket_offset"`
+	NextKalshiCursor        string               `json:"next_kalshi_cursor"`
+	Warnings                []string             `json:"warnings"`
+	CandidateCount          int                  `json:"candidate_count"`
+	Compatibility           matching.FilterStats `json:"compatibility_filters"`
+	Candidates              []matching.Candidate `json:"candidates"`
 }
 
 func main() {
@@ -63,6 +80,13 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	flags.IntVar(&o.offset, "polymarket-offset", 0, "first Gamma record offset")
 	flags.StringVar(&o.cursor, "kalshi-cursor", "", "first Kalshi page cursor")
 	flags.StringVar(&o.series, "kalshi-series", "", "optional Kalshi series filter")
+	flags.StringVar(&o.topic, "topic", "", "remote Polymarket topic search plus related Kalshi series discovery")
+	flags.StringVar(&o.category, "kalshi-category", "", "case-sensitive Kalshi category (inferred for common topics)")
+	flags.IntVar(&o.maxSeries, "max-series", 5, "maximum related Kalshi series to search (1..10)")
+	flags.IntVar(&o.topicEvents, "topic-events", 5, "Polymarket search events per page (1..20; nested markets can be numerous)")
+	flags.IntVar(&o.searchPage, "search-page", 1, "first Polymarket topic-search page (1..90)")
+	flags.StringVar(&o.after, "deadline-after", "", "inclusive reported-deadline lower bound (RFC3339; topic mode only)")
+	flags.StringVar(&o.before, "deadline-before", "", "inclusive reported-deadline upper bound (RFC3339; topic mode only)")
 	flags.StringVar(&o.query, "query", "", "case-insensitive substring filter on sampled title/event/YES-label metadata")
 	flags.Float64Var(&o.threshold, "min-score", 0.45, "minimum lexical similarity (0 < score <= 1; not a probability)")
 	flags.IntVar(&o.top, "top", 5, "maximum candidate pairs to display (1..50)")
@@ -83,8 +107,42 @@ func run(ctx context.Context, args []string, out, errOut io.Writer) error {
 	if o.format != "text" && o.format != "json" {
 		return fmt.Errorf("format must be text or json")
 	}
+	o.topic = strings.TrimSpace(o.topic)
+	if o.maxSeries < 1 || o.maxSeries > 10 || o.topicEvents < 1 || o.topicEvents > 20 || o.searchPage < 1 || o.searchPage > 90 || len(o.topic) > 256 {
+		return fmt.Errorf("invalid topic discovery bounds; see -help")
+	}
+	if o.topic != "" {
+		if o.offset != 0 || (o.cursor != "" && o.series == "") {
+			return fmt.Errorf("topic mode uses -search-page; a Kalshi cursor requires an explicit -kalshi-series")
+		}
+		if o.category == "" {
+			o.category = topicCategory(o.topic)
+		}
+		if o.series == "" && o.category == "" {
+			return fmt.Errorf("specify -kalshi-category or -kalshi-series for this topic")
+		}
+	} else if o.after != "" || o.before != "" || o.category != "" {
+		return fmt.Errorf("deadline/category filters require -topic")
+	}
+	for _, value := range []string{o.after, o.before} {
+		if value != "" {
+			if _, err := time.Parse(time.RFC3339Nano, value); err != nil {
+				return fmt.Errorf("deadline bounds must be precise RFC3339 timestamps")
+			}
+		}
+	}
+	if o.after != "" && o.before != "" {
+		a, _ := time.Parse(time.RFC3339Nano, o.after)
+		b, _ := time.Parse(time.RFC3339Nano, o.before)
+		if a.After(b) {
+			return fmt.Errorf("deadline-after must not follow deadline-before")
+		}
+	}
 	ctx, cancel := context.WithTimeout(ctx, o.timeout)
 	defer cancel()
+	if o.topic != "" {
+		return executeTopic(ctx, polymarket.NewClient(), kalshi.NewClient(), o, out, errOut)
+	}
 	return execute(ctx, polymarket.NewClient(), kalshi.NewClient(), o, out, errOut)
 }
 
@@ -154,11 +212,16 @@ func execute(ctx context.Context, gamma gammaReader, kal kalshiReader, o options
 		seenCursors[cursor] = true
 	}
 	result.PolymarketMarkets, result.KalshiMarkets = len(poly), len(ks)
-	candidates, total, err := matching.Find(ctx, poly, ks, matching.Options{Threshold: o.threshold, Top: o.top, Query: o.query})
+	return finishReport(ctx, result, poly, ks, o, out, errOut)
+}
+
+func finishReport(ctx context.Context, result report, poly, ks []matching.Contract, o options, out, errOut io.Writer) error {
+
+	candidates, total, stats, err := matching.FindDetailed(ctx, poly, ks, matching.Options{Threshold: o.threshold, Top: o.top, Query: o.query})
 	if err != nil {
 		return err
 	}
-	result.Candidates, result.CandidateCount = candidates, total
+	result.Candidates, result.CandidateCount, result.Compatibility = candidates, total, stats
 	for _, warning := range result.Warnings {
 		fmt.Fprintln(errOut, "warning:", clean(warning))
 	}
@@ -188,8 +251,31 @@ func printReport(out io.Writer, r report) error {
 	var b strings.Builder
 	fmt.Fprintln(&b, "Cross-platform candidate matcher — NEEDS MANUAL REVIEW")
 	fmt.Fprintln(&b, r.Note)
+	if r.Topic != "" {
+		fmt.Fprintf(&b, "Topic: %s | Kalshi category: %s\n", clean(r.Topic), present(r.KalshiCategory))
+		fmt.Fprintf(&b, "Kalshi related series: %d matched; %d selected\n", r.KalshiSeriesMatched, len(r.KalshiSeries))
+		for _, series := range r.KalshiSeries {
+			fmt.Fprintf(&b, "  %s — %s\n", clean(series.Ticker), clean(series.Title))
+		}
+		if r.WindowAfter != "" || r.WindowBefore != "" {
+			fmt.Fprintf(&b, "Reported deadline window: %s to %s (platform deadline meanings differ)\n", present(r.WindowAfter), present(r.WindowBefore))
+		}
+		fmt.Fprintf(&b, "Window omitted: %d Polymarket, %d Kalshi (includes missing/imprecise deadlines)\n", r.WindowOmittedPolymarket, r.WindowOmittedKalshi)
+	}
 	fmt.Fprintf(&b, "Sample: %d Polymarket YES/NO markets (%d pages), %d Kalshi markets (%d pages).\n", r.PolymarketMarkets, r.PolymarketPages, r.KalshiMarkets, r.KalshiPages)
-	fmt.Fprintf(&b, "%d candidate pairs above threshold; showing %d.\n", r.CandidateCount, len(r.Candidates))
+	fmt.Fprintf(&b, "%d candidate pairs after compatibility filters; showing %d.\n", r.CandidateCount, len(r.Candidates))
+	fmt.Fprintf(&b, "Compatibility: %d text candidates; %d rejected for recognized conflicts.\n", r.Compatibility.TextCandidates, r.Compatibility.RejectedPairs)
+	reasons := make([]string, 0, len(r.Compatibility.RejectionReasons))
+	for reason := range r.Compatibility.RejectionReasons {
+		reasons = append(reasons, reason)
+	}
+	sort.Strings(reasons)
+	for _, reason := range reasons {
+		fmt.Fprintf(&b, "  Rejected for %s: %d pairs\n", reason, r.Compatibility.RejectionReasons[reason])
+	}
+	if len(reasons) > 0 {
+		fmt.Fprintln(&b, "A pair may have multiple rejection reasons.")
+	}
 	for i, c := range r.Candidates {
 		fmt.Fprintf(&b, "\nCandidate %d — needs_review — text similarity %.3f (not confidence)\nShared terms: %s\n", i+1, c.Similarity, strings.Join(c.SharedTerms, ", "))
 		p, k := c.Polymarket, c.Kalshi
@@ -200,6 +286,13 @@ func printReport(out io.Writer, r report) error {
 			{"Deadline kind", p.DeadlineKind, k.DeadlineKind}, {"Deadline", p.Deadline, k.Deadline},
 			{"Expected expiry", p.ExpectedExpiration, k.ExpectedExpiration}, {"Latest expiry", p.LatestExpiration, k.LatestExpiration},
 			{"Early close", p.EarlyCloseCondition, k.EarlyCloseCondition}, {"Resolution source", p.ResolutionSource, k.ResolutionSource},
+			{"Parsed type", c.PolymarketFacts.Kind, c.KalshiFacts.Kind},
+			{"Parsed direction", c.PolymarketFacts.Direction, c.KalshiFacts.Direction},
+			{"Parsed lower", c.PolymarketFacts.Lower, c.KalshiFacts.Lower},
+			{"Parsed upper", c.PolymarketFacts.Upper, c.KalshiFacts.Upper},
+			{"Parsed source", c.PolymarketFacts.Source, c.KalshiFacts.Source},
+			{"Measurement", c.PolymarketFacts.Measurement, c.KalshiFacts.Measurement},
+			{"Observation", fmt.Sprintf("%+v", c.PolymarketFacts.Observation), fmt.Sprintf("%+v", c.KalshiFacts.Observation)},
 			{"Primary rules", p.RulesPrimary, k.RulesPrimary}, {"Secondary rules", p.RulesSecondary, k.RulesSecondary},
 		} {
 			compareRow(&b, row[0], present(row[1]), present(row[2]))
@@ -211,7 +304,14 @@ func printReport(out io.Writer, r report) error {
 	if len(r.Candidates) == 0 {
 		fmt.Fprintln(&b, "No candidate pairs in this sample. This does not establish that the full catalogs have no overlapping markets.")
 	}
-	fmt.Fprintf(&b, "\nNext Polymarket offset: %d\nNext Kalshi cursor: %s\n", r.NextPolymarketOffset, present(r.NextKalshiCursor))
+	if r.Topic != "" {
+		fmt.Fprintf(&b, "\nNext Polymarket search page: %d | API has more: %t\n", r.NextSearchPage, r.PolymarketSearchHasMore)
+		for _, series := range r.KalshiSeries {
+			fmt.Fprintf(&b, "Kalshi %s next cursor: %s\n", clean(series.Ticker), present(r.KalshiSeriesCursors[series.Ticker]))
+		}
+	} else {
+		fmt.Fprintf(&b, "\nNext Polymarket offset: %d\nNext Kalshi cursor: %s\n", r.NextPolymarketOffset, present(r.NextKalshiCursor))
+	}
 	_, err := io.WriteString(out, b.String())
 	return err
 }

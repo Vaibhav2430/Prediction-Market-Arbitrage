@@ -50,12 +50,14 @@ func FromKalshi(m kalshi.Market) Contract {
 }
 
 type Candidate struct {
-	Status      string   `json:"status"`
-	Similarity  float64  `json:"text_similarity"`
-	SharedTerms []string `json:"shared_terms"`
-	Polymarket  Contract `json:"polymarket"`
-	Kalshi      Contract `json:"kalshi"`
-	Warnings    []string `json:"review_warnings"`
+	Status          string   `json:"status"`
+	Similarity      float64  `json:"text_similarity"`
+	SharedTerms     []string `json:"shared_terms"`
+	Polymarket      Contract `json:"polymarket"`
+	Kalshi          Contract `json:"kalshi"`
+	Warnings        []string `json:"review_warnings"`
+	PolymarketFacts Facts    `json:"polymarket_facts"`
+	KalshiFacts     Facts    `json:"kalshi_facts"`
 }
 
 type Options struct {
@@ -67,14 +69,27 @@ type Options struct {
 type prepared struct {
 	contract       Contract
 	title, context map[string]bool
+	facts          Facts
 }
 
 // Find returns the best bounded set and the total number above the threshold.
-// Rankings use lexical Dice overlap, not probabilities. Numeric/polarity/date
-// differences remain visible warnings; no pair is automatically approved.
+// Rankings use lexical Dice overlap after rejecting recognized structured
+// conflicts. Unparsed details remain warnings; no pair is automatically approved.
+type FilterStats struct {
+	TextCandidates   int            `json:"text_candidates"`
+	RejectedPairs    int            `json:"rejected_pairs"`
+	RejectionReasons map[string]int `json:"rejection_reasons"`
+}
+
 func Find(ctx context.Context, poly, kal []Contract, options Options) ([]Candidate, int, error) {
+	candidates, total, _, err := FindDetailed(ctx, poly, kal, options)
+	return candidates, total, err
+}
+
+func FindDetailed(ctx context.Context, poly, kal []Contract, options Options) ([]Candidate, int, FilterStats, error) {
+	stats := FilterStats{RejectionReasons: map[string]int{}}
 	if math.IsNaN(options.Threshold) || math.IsInf(options.Threshold, 0) || options.Threshold <= 0 || options.Threshold > 1 || options.Top < 1 || options.Top > 50 {
-		return nil, 0, fmt.Errorf("threshold must be in (0,1] and top must be 1..50")
+		return nil, 0, stats, fmt.Errorf("threshold must be in (0,1] and top must be 1..50")
 	}
 	prepare := func(contracts []Contract) []prepared {
 		result := make([]prepared, 0, len(contracts))
@@ -83,7 +98,7 @@ func Find(ctx context.Context, poly, kal []Contract, options Options) ([]Candida
 			if !strings.Contains(strings.ToLower(c.Title+" "+c.Event+" "+c.YesLabel), strings.ToLower(options.Query)) {
 				continue
 			}
-			result = append(result, prepared{c, terms(c.Title), terms(c.Title + " " + c.YesLabel + " " + c.Event)})
+			result = append(result, prepared{c, terms(c.Title), terms(c.Title + " " + c.YesLabel + " " + c.Event), Extract(c)})
 		}
 		return result
 	}
@@ -93,7 +108,7 @@ func Find(ctx context.Context, poly, kal []Contract, options Options) ([]Candida
 	for _, a := range p {
 		for _, b := range k {
 			if err := ctx.Err(); err != nil {
-				return nil, 0, err
+				return nil, 0, stats, err
 			}
 			titleScore, titleShared := similarity(a.title, b.title)
 			contextScore, contextShared := similarity(a.context, b.context)
@@ -104,8 +119,17 @@ func Find(ctx context.Context, poly, kal []Contract, options Options) ([]Candida
 			if score < options.Threshold || len(shared) < 2 {
 				continue
 			}
+			stats.TextCandidates++
+			conflicts := Conflicts(a.facts, b.facts)
+			if len(conflicts) > 0 {
+				stats.RejectedPairs++
+				for _, reason := range conflicts {
+					stats.RejectionReasons[reason]++
+				}
+				continue
+			}
 			total++
-			candidate := Candidate{Status: "needs_review", Similarity: score, SharedTerms: shared, Polymarket: a.contract, Kalshi: b.contract}
+			candidate := Candidate{Status: "needs_review", Similarity: score, SharedTerms: shared, Polymarket: a.contract, Kalshi: b.contract, PolymarketFacts: a.facts, KalshiFacts: b.facts}
 			// Keep ranking memory bounded even if many pairs are similar.
 			if len(best) < options.Top {
 				best = append(best, candidate)
@@ -123,13 +147,21 @@ func Find(ctx context.Context, poly, kal []Contract, options Options) ([]Candida
 		}
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, 0, err
+		return nil, 0, stats, err
 	}
 	sort.Slice(best, func(i, j int) bool { return better(best[i], best[j]) })
 	for i := range best {
 		best[i].Warnings = reviewWarnings(best[i].Polymarket, best[i].Kalshi)
+		for _, side := range []struct {
+			name  string
+			facts Facts
+		}{{"Polymarket", best[i].PolymarketFacts}, {"Kalshi", best[i].KalshiFacts}} {
+			if len(side.facts.Unknown) > 0 {
+				best[i].Warnings = append(best[i].Warnings, side.name+" unparsed details: "+strings.Join(side.facts.Unknown, ", ")+". Missing details are not evidence of agreement.")
+			}
+		}
 	}
-	return best, total, nil
+	return best, total, stats, nil
 }
 
 func better(a, b Candidate) bool {

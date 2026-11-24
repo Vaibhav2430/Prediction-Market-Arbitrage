@@ -32,19 +32,12 @@ func TestExactTextStillNeedsReview(t *testing.T) {
 	}
 }
 
-func TestDifferentThresholdsDatesAndPolarityAreFlagged(t *testing.T) {
+func TestDifferentKnownThresholdsAndDirectionsAreRejected(t *testing.T) {
 	p := fixture("polymarket", "p", "Will Bitcoin be above 100000 before December 2026?")
 	k := fixture("kalshi", "k", "Will Bitcoin be below 90000 after December 2027?")
-	k.Deadline = "2028-01-01T00:00:00Z"
-	pairs, _, err := Find(context.Background(), []Contract{p}, []Contract{k}, Options{Threshold: .4, Top: 5})
-	if err != nil || len(pairs) != 1 {
-		t.Fatalf("pairs=%+v err=%v", pairs, err)
-	}
-	warnings := strings.Join(pairs[0].Warnings, " ")
-	for _, want := range []string{"Numbers", "Directional", "deadlines differ", "different meanings"} {
-		if !strings.Contains(warnings, want) {
-			t.Fatalf("missing %q in %s", want, warnings)
-		}
+	pairs, total, stats, err := FindDetailed(context.Background(), []Contract{p}, []Contract{k}, Options{Threshold: .4, Top: 5})
+	if err != nil || len(pairs) != 0 || total != 0 || stats.RejectedPairs != 1 || stats.RejectionReasons["threshold"] != 1 || stats.RejectionReasons["direction"] != 1 {
+		t.Fatalf("pairs=%+v stats=%+v err=%v", pairs, stats, err)
 	}
 }
 

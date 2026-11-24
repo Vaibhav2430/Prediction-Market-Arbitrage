@@ -165,7 +165,7 @@ prices, calculate arbitrage, or trade. Every candidate has `status=needs_review`
 including identical titles or rules. There is no automatically verified state.
 A shared YES/NO label does not establish that the YES predicates align.
 
-Candidates are ranked by lexical Dice overlap, taking the higher overlap of
+After recognized structured conflicts are rejected, candidates are ranked by lexical Dice overlap, taking the higher overlap of
 title words and title plus event/YES-label context. At least two distinct shared
 non-numeric terms are required. Common grammatical words and generic market
 terms are ignored. The default `-min-score` is 0.45; scores are text similarity,
@@ -178,8 +178,9 @@ and full primary/secondary rules in side-by-side columns without truncation.
 JSON preserves raw text. Polymarket's Gamma description supplies its rules;
 Kalshi's primary/secondary rules are retained along with expected/latest expiry
 and early-close conditions when provided. Missing fields display as unavailable.
-Numeric differences, directional/negative wording, missing metadata, imprecise
-or differing deadlines are flagged. Gamma `endDate` and Kalshi `close_time` are
+Recognized contract type, threshold, direction, observation, and source
+conflicts reject pairs. Unparsed numeric/directional wording, missing metadata,
+and imprecise or differing platform deadlines remain review flags. Gamma `endDate` and Kalshi `close_time` are
 explicitly distinguished: matching timestamps are not evidence that event
 cutoffs or resolution windows are equivalent. Review sources, thresholds,
 postponements, cancellations, and exceptional settlement outcomes in full.
@@ -199,3 +200,96 @@ existing 10-second timeout and 4 MiB cap; `-timeout` (default 30s) covers discov
 and comparison. Ctrl-C cancels work. Individual malformed records warn; a failed
 discovery request aborts without publishing a partial candidate report.
 Existing `cmd/scanner` modes are unchanged. No credentials or trading are used.
+
+
+## Topic-focused discovery
+
+```sh
+# Search related Bitcoin events on both platforms (remote discovery):
+go run ./cmd/matcher -topic bitcoin -top 5
+# Use an exact Kalshi series rather than automatic series selection:
+go run ./cmd/matcher -topic bitcoin -kalshi-series KXBTCD -top 5
+# Other topics: provide Kalshi's exact, case-sensitive discovery category:
+go run ./cmd/matcher -topic 'presidential election' -kalshi-category Politics
+# Optionally narrow reported deadlines, using explicit timezone offsets:
+go run ./cmd/matcher -topic bitcoin -deadline-after '2026-11-23T00:00:00-08:00' -deadline-before '2026-12-01T23:59:59-08:00'
+# Structured review report:
+go run ./cmd/matcher -topic bitcoin -format json > candidates.json
+```
+
+`-topic` changes discovery: Polymarket uses public text search and reads the
+open markets nested in returned events. It validates each market's active/closed
+flags because active events can still contain closed contracts. Event titles
+are retained as matching context. `-topic-events` defaults to 5 events per page
+(1..20); events can contain many markets. `-search-page` starts at 1 and follows
+the API's `hasMore` flag, bounded by `-pages`.
+
+Kalshi first fetches series metadata for one category, matches topic wording
+against titles/tags locally, then requests open markets using each selected
+`series_ticker`. Common crypto, economic, and sports topics infer a category;
+other topics require `-kalshi-category` or `-kalshi-series`. This API does not
+provide text search on its series-list endpoint. Title/tag matching can miss
+aliases or synonyms. Automatic discovery ranks topic wording in titles, exact topic tags, modern
+KX tickers, and broad price-series wording ahead of short tag-only matches;
+it does not rank current liquidity or contract equivalence. It may include
+series without open markets. Use an explicit series for precise targeting.
+
+`-max-series` bounds automatic selection (default 5, maximum 10). Reports list
+selected series and how many matched the topic, and warn about omitted series.
+Each series has its own pagination cursor and up to `-pages` requests; cursors
+are never reused across different series. With an explicit `-kalshi-series`,
+`-kalshi-cursor` can resume that series. Otherwise use reported per-series
+cursors only with the corresponding explicit series. Catalog mode's
+`-polymarket-offset` is incompatible with topic search; use `-search-page`.
+
+The optional inclusive `-deadline-after` and `-deadline-before` bounds filter
+retrieved metadata locally. Both require RFC3339 timestamps with a timezone.
+The report counts excluded contracts, including missing/imprecise dates. These
+filters compare Gamma `endDate` and Kalshi `close_time`; they do not make event
+cutoffs or settlement times equivalent. They are not remote full-calendar
+filters. `-query` remains an additional local substring filter on fetched data.
+
+Topic mode caps retained markets at 1000 per venue and keeps existing request
+size/time limits and cancellation. A cap produces a warning; continuation may
+skip unprocessed nested records on the capped page. Reduce `-topic-events` if
+a search response exceeds 4 MiB. HTTP/validation failures stop the report rather
+than silently falling back to unrelated catalogs. No related series or no
+candidate pairs is a valid bounded search result, not proof of no overlap.
+Every candidate remains `needs_review`. No prices, arbitrage, or trading are
+introduced. Existing catalog matching and price scanner commands still work.
+
+References: [Polymarket public search](https://docs.polymarket.com/api-reference/search/search-markets-events-and-profiles)
+and [Kalshi series discovery](https://docs.kalshi.com/api-reference/market/get-series-list).
+
+
+## Structured compatibility checks
+
+The matcher now rejects recognized conflicts before returning ranked candidates.
+The report counts text-similar pairs, rejected pairs, and rejection reasons;
+one pair can have multiple reasons. Both JSON and text retain the surviving
+candidates' parsed details, alongside original rules. Every survivor still has
+`needs_review` status: absence of a recognized conflict is not equivalence.
+
+Checks distinguish ranges from thresholds, compare both range boundaries,
+compare exact amounts without floating point ($54,000 and $54k normalize to
+54000), and preserve strict versus inclusive inequalities. Primary rules take
+precedence over display labels when their predicate is recognized. Observation
+mode (point versus touch), measurement (e.g. candle close versus index average),
+known asset identity, source family, observation dates, and explicit clocks/time
+zones are compared. No threshold tolerance, price rounding, or assumed mapping
+between Binance and CF Benchmarks is used.
+
+Observation dates and clocks come from title/rule wording, not Gamma endDate
+or Kalshi close_time. Missing years are left unknown. Explicit ET clocks use
+America/New_York timezone rules when a year/date is known; EST/EDT are fixed
+stated offsets. Unknown or ambiguous details are disclosed for manual review.
+The parser recognizes a limited set of English price predicates, assets,
+sources, month/ISO dates, and explicit time zones. It is not a general natural
+language settlement verifier, and unsupported wording can remain a candidate
+with unknown details. Existing deadline-window filters remain discovery filters.
+
+The previously shown range of $54,000-$56,000 on November 24 (Binance candle
+close) versus above $51,100 on November 23 (CF Benchmarks average) is covered by
+a regression test and is rejected rather than filling the top results. This
+change does not introduce pricing comparisons, credentials, trading, automatic
+approval, or a verified arbitrage claim.
