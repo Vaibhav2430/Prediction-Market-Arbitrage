@@ -16,6 +16,7 @@ import (
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/kalshi"
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/matching"
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/models"
+	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/settlement"
 )
 
 const Version = 1
@@ -34,22 +35,24 @@ type Snapshot struct {
 	TermsSHA256 string             `json:"terms_sha256"`
 }
 type Review struct {
-	Reviewer          string    `json:"reviewer"`
-	ReviewedAt        time.Time `json:"reviewed_at"`
-	OutcomeEvidence   string    `json:"outcome_evidence"`
-	TimingEvidence    string    `json:"timing_evidence"`
-	ExceptionEvidence string    `json:"exception_evidence"`
-	SourceEvidence    string    `json:"source_evidence"`
-	Findings          []string  `json:"findings"`
-	ResidualRisks     []string  `json:"residual_risks"`
+	Reviewer              string    `json:"reviewer"`
+	ReviewedAt            time.Time `json:"reviewed_at"`
+	OutcomeEvidence       string    `json:"outcome_evidence"`
+	TimingEvidence        string    `json:"timing_evidence"`
+	ExceptionEvidence     string    `json:"exception_evidence"`
+	SourceEvidence        string    `json:"source_evidence"`
+	Findings              []string  `json:"findings"`
+	ResidualRisks         []string  `json:"residual_risks"`
+	SettlementFingerprint string    `json:"settlement_fingerprint,omitempty"`
 }
 type Entry struct {
-	ID          string   `json:"id"`
-	Status      string   `json:"status"`
-	Relation    string   `json:"yes_relation"`
-	Fingerprint string   `json:"rules_fingerprint"`
-	Snapshot    Snapshot `json:"reviewed_snapshot"`
-	Review      Review   `json:"review"`
+	ID              string            `json:"id"`
+	Status          string            `json:"status"`
+	Relation        string            `json:"yes_relation"`
+	Fingerprint     string            `json:"rules_fingerprint"`
+	Snapshot        Snapshot          `json:"reviewed_snapshot"`
+	Review          Review            `json:"review"`
+	SettlementModel *settlement.Model `json:"settlement_model,omitempty"`
 }
 type File struct {
 	Version int     `json:"version"`
@@ -135,7 +138,21 @@ func Validate(e Entry) error {
 	if e.Fingerprint != Fingerprint(s, e.Relation) {
 		return fmt.Errorf("saved fingerprint does not match saved rules/mapping; recapture and review")
 	}
+	var assessment settlement.Report
+	if e.SettlementModel != nil {
+		var err error
+		assessment, err = AssessSettlement(e)
+		if err != nil {
+			return fmt.Errorf("invalid settlement model: %w", err)
+		}
+	}
 	if e.Status == "approved" {
+		if e.SettlementModel == nil || assessment.Status != "compatible_in_model" {
+			return fmt.Errorf("approval requires a complete compatible settlement model; unresolved/conflicting cases block pricing")
+		}
+		if e.Review.SettlementFingerprint != settlement.Fingerprint(*e.SettlementModel) {
+			return fmt.Errorf("scenario model changed or lacks a recorded review fingerprint")
+		}
 		review := e.Review
 		for _, text := range []string{review.Reviewer, review.OutcomeEvidence, review.TimingEvidence, review.ExceptionEvidence, review.SourceEvidence} {
 			if strings.TrimSpace(text) == "" {
@@ -162,4 +179,12 @@ func State(e Entry, current Snapshot) string {
 		return "needs_review"
 	}
 	return "approved_rules_current"
+}
+
+// AssessSettlement binds a manual scenario model to the exact reviewed rules.
+func AssessSettlement(e Entry) (settlement.Report, error) {
+	if e.SettlementModel == nil {
+		return settlement.Report{}, fmt.Errorf("no settlement model")
+	}
+	return settlement.Assess(*e.SettlementModel, settlement.Binding{PairID: e.ID, RulesFingerprint: e.Fingerprint, Relation: e.Relation, Polymarket: e.Snapshot.Polymarket, Kalshi: e.Snapshot.Kalshi, TermsURL: e.Snapshot.Sources.TermsURL, TermsSHA256: e.Snapshot.TermsSHA256})
 }

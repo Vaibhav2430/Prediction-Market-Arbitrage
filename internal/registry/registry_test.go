@@ -10,6 +10,7 @@ import (
 
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/kalshi"
 	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/models"
+	"github.com/Vaibhav2430/Prediction-Market-Arbitrage/internal/settlement"
 )
 
 type fakeGamma struct {
@@ -69,8 +70,14 @@ func fixture(t *testing.T) (Entry, fakeGamma, *fakeKalshi, fakeTerms) {
 	return entry, fakeGamma{p: p}, k, terms
 }
 func approve(entry Entry) Entry {
+	model := settlement.Model{Version: 1, Profile: "presidential_nomination", PairID: entry.ID, RulesFingerprint: entry.Fingerprint, Relation: entry.Relation, Scope: "Synthetic test review", Sources: []settlement.Evidence{{ID: "p", Venue: "polymarket", Field: "rules_primary", Excerpt: "Official rules", Explanation: "Fixture"}, {ID: "k", Venue: "kalshi", Field: "rules_primary", Excerpt: "Official rules", Explanation: "Fixture"}}}
+	for _, category := range settlement.RequiredCategories() {
+		model.Cases = append(model.Cases, settlement.Case{ID: category, Category: category, Description: "Synthetic fixture", Polymarket: settlement.Assertion{Outcome: "yes", Evidence: []string{"p"}, Reason: "Fixture"}, Kalshi: settlement.Assertion{Outcome: "yes", Evidence: []string{"k"}, Reason: "Fixture"}})
+	}
+	entry.SettlementModel = &model
 	entry.Status = "approved"
 	entry.Review = Review{Reviewer: "Test reviewer", ReviewedAt: time.Now().UTC(), OutcomeEvidence: "Same predicate", TimingEvidence: "Aligned observation and expiry", ExceptionEvidence: "Aligned cancellation and delay outcomes", SourceEvidence: "Same official agency", ResidualRisks: []string{"Execution risk"}}
+	entry.Review.SettlementFingerprint = settlement.Fingerprint(model)
 	return entry
 }
 
@@ -195,5 +202,30 @@ func TestTermsURLRestrictions(t *testing.T) {
 		if _, err := NewTermsClient().Read(context.Background(), address); err == nil {
 			t.Fatalf("unsafe URL accepted: %s", address)
 		}
+	}
+}
+
+func TestSettlementReviewCannotBeBypassedOrEditedSilently(t *testing.T) {
+	e, _, _, _ := fixture(t)
+	e = approve(e)
+	if err := Validate(e); err != nil {
+		t.Fatal(err)
+	}
+	e.SettlementModel.Cases[0].Polymarket.Outcome = "unknown"
+	e.Review.SettlementFingerprint = settlement.Fingerprint(*e.SettlementModel)
+	if err := Validate(e); err == nil {
+		t.Fatal("unresolved model accepted even with matching fingerprint")
+	}
+	e, _, _, _ = fixture(t)
+	e = approve(e)
+	e.SettlementModel.Cases[0].Description += " edited"
+	if err := Validate(e); err == nil {
+		t.Fatal("edited model accepted with old review fingerprint")
+	}
+	e, _, _, _ = fixture(t)
+	e = approve(e)
+	e.SettlementModel = nil
+	if err := Validate(e); err == nil {
+		t.Fatal("approval without model accepted")
 	}
 }

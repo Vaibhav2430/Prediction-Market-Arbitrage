@@ -67,21 +67,268 @@
         "terms_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
       },
       "review": {
-        "reviewer": "Codex research (not approval)",
-        "reviewed_at": "2026-11-24T00:59:25.259711Z",
+        "reviewer": "Codex official-source research (not approval)",
+        "reviewed_at": "2026-11-25T00:48:51.252514Z",
         "outcome_evidence": "Both current primary descriptions require Gavin Newsom to win and accept the Democratic Party presidential nomination for 2028; same YES direction. Kalshi linked PRESNOM terms use the first nominated person who accepts. Polymarket explicitly states later nominee replacement does not change resolution.",
-        "timing_evidence": "Both can resolve after nomination acceptance, but Kalshi lists terminal expiration 2028-11-07T15:00:00Z and Polymarket endDate is 2028-11-08T04:59:00Z. These are not assumed to be interchangeable event cutoffs.",
-        "exception_evidence": "Replacement handling appears aligned in the ordinary accepted-nomination case. No-accepted-nominee and acceptance near the differing terminal dates are not established as equivalent. Kalshi binding terms retain outcome-review discretion.",
+        "timing_evidence": "Official Polymarket resolution documentation describes endDate as eligibility for resolution, not proof of a hard event cutoff. Kalshi PRESNOM terms separately prescribe contractual expiration. Metadata timestamps alone do not prove divergent or identical event predicates.",
+        "exception_evidence": "Research confirmed that Polymarket dispute procedures include a rare Unknown/50-50 outcome, while PRESNOM reserves Kalshi outcome review. Neither establishes matching payouts for no nominee, late acceptance, cancellation or disputed acceptance. No clarification was verified because the targeted API requests timed out.",
         "source_evidence": "Polymarket specifies consensus of official Democratic Party sources. Kalshi event settlement_sources identifies Democratic Party; linked series terms identify the political party as source agency.",
         "findings": [
-          "Resolve no-accepted-nominee and late-acceptance outcomes across the differing terminal times before approval.",
-          "Confirm governing platform-wide cancellation/dispute rules; matching predicates alone is insufficient."
+          "Four exceptional payouts remain unresolved after focused official-source research; no approval granted.",
+          "Polymarket endDate is resolution eligibility, not an established nomination acceptance cutoff.",
+          "Market/event/question clarification API checks timed out; no absence-of-clarifications claim is made.",
+          "The current Kalshi general rulebook version could not be verified from the official listing; historical search hits were not applied."
         ],
         "residual_risks": [
           "Different platform adjudication and payout timing.",
           "Separate execution and collateral-to-USD parity.",
           "Fingerprint covers captured inputs, not every referenced rulebook or source webpage."
         ]
+      },
+      "settlement_model": {
+        "version": 1,
+        "pair_id": "newsom-democratic-nominee-2028",
+        "rules_fingerprint": "742d883ef85c2dfa251332b372a2800e3e085d82493d03951ed035591f728270",
+        "yes_relation": "same",
+        "scope": "Manual model of 2028 Democratic presidential nomination acceptance for Gavin Newsom, including replacement and exceptional timing; no automatic equivalence claim.",
+        "sources": [
+          {
+            "id": "p-accept",
+            "venue": "polymarket",
+            "field": "rules_primary",
+            "excerpt": "wins and accepts",
+            "explanation": "Acceptance is part of the named-candidate predicate."
+          },
+          {
+            "id": "p-otherwise",
+            "venue": "polymarket",
+            "field": "rules_primary",
+            "excerpt": "Otherwise",
+            "explanation": "The primary rule defines the negative outcome."
+          },
+          {
+            "id": "p-replacement",
+            "venue": "polymarket",
+            "field": "rules_primary",
+            "excerpt": "Any replacement",
+            "explanation": "Later replacement does not reopen the nomination result."
+          },
+          {
+            "id": "p-date",
+            "venue": "polymarket",
+            "field": "deadline",
+            "excerpt": "2028-11-08T04:59:00Z",
+            "explanation": "Gamma metadata endDate. The official resolution guide describes end date as eligibility for resolution; it does not establish a market-specific acceptance cutoff."
+          },
+          {
+            "id": "k-accept",
+            "venue": "kalshi",
+            "field": "rules_primary",
+            "excerpt": "wins and accepts",
+            "explanation": "Named-candidate nomination acceptance is required."
+          },
+          {
+            "id": "k-date",
+            "venue": "kalshi",
+            "field": "latest_expiration",
+            "excerpt": "2028-11-07T15:00:00Z",
+            "explanation": "Listed terminal expiration; exceptional payout behavior is not assumed."
+          },
+          {
+            "id": "k-first",
+            "venue": "kalshi",
+            "field": "terms",
+            "excerpt": "first person",
+            "explanation": "Binding payout criterion selects the first accepted nominee.",
+            "url": "https://assets.kalshi.com/contract_terms/PRESNOM.pdf",
+            "document_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
+          },
+          {
+            "id": "k-expiry",
+            "venue": "kalshi",
+            "field": "terms",
+            "excerpt": "Expiration Date",
+            "explanation": "Binding terms specify an election-day terminal expiration.",
+            "url": "https://assets.kalshi.com/contract_terms/PRESNOM.pdf",
+            "document_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
+          },
+          {
+            "id": "k-review",
+            "venue": "kalshi",
+            "field": "terms",
+            "excerpt": "Contingencies",
+            "explanation": "Binding terms retain outcome-review discretion.",
+            "url": "https://assets.kalshi.com/contract_terms/PRESNOM.pdf",
+            "document_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
+          }
+        ],
+        "cases": [
+          {
+            "id": "newsom-accepts-early",
+            "category": "named_candidate_accepts",
+            "description": "Newsom is the first accepted Democratic nominee for 2028, well before Kalshi expiration and the listed Polymarket end date, with no dispute.",
+            "polymarket": {
+              "outcome": "yes",
+              "evidence": [
+                "p-accept"
+              ],
+              "reason": "The named candidate satisfies the stated predicate."
+            },
+            "kalshi": {
+              "outcome": "yes",
+              "evidence": [
+                "k-accept",
+                "k-first"
+              ],
+              "reason": "The first accepted nominee is the named candidate."
+            }
+          },
+          {
+            "id": "other-accepts-early",
+            "category": "other_candidate_accepts",
+            "description": "Another candidate is the first accepted nominee well before both listed dates; Newsom is never nominated or accepted.",
+            "polymarket": {
+              "outcome": "no",
+              "evidence": [
+                "p-otherwise"
+              ],
+              "reason": "The named-candidate predicate is not satisfied."
+            },
+            "kalshi": {
+              "outcome": "no",
+              "evidence": [
+                "k-first"
+              ],
+              "reason": "The first accepted nominee is someone else."
+            }
+          },
+          {
+            "id": "newsom-replaced",
+            "category": "replacement_after_acceptance",
+            "description": "Newsom first wins and accepts well before both listed dates, then is replaced before election day.",
+            "polymarket": {
+              "outcome": "yes",
+              "evidence": [
+                "p-accept",
+                "p-replacement"
+              ],
+              "reason": "Later replacement does not change the accepted nomination result."
+            },
+            "kalshi": {
+              "outcome": "yes",
+              "evidence": [
+                "k-first"
+              ],
+              "reason": "The first accepted nominee remains Newsom for this criterion."
+            }
+          },
+          {
+            "id": "other-replaced-by-newsom",
+            "category": "replacement_after_acceptance",
+            "description": "Another candidate first accepts well before both listed dates; Newsom replaces that person later.",
+            "polymarket": {
+              "outcome": "no",
+              "evidence": [
+                "p-otherwise",
+                "p-replacement"
+              ],
+              "reason": "A later replacement does not change the initial nomination result."
+            },
+            "kalshi": {
+              "outcome": "no",
+              "evidence": [
+                "k-first"
+              ],
+              "reason": "Newsom was not the first accepted nominee."
+            }
+          },
+          {
+            "id": "no-acceptance",
+            "category": "no_accepted_nominee",
+            "description": "Nobody has accepted by Kalshi expiration or by the listed Polymarket resolution-eligibility date.",
+            "polymarket": {
+              "outcome": "unknown",
+              "evidence": [
+                "p-date",
+                "p-otherwise"
+              ],
+              "reason": "The general resolution guide treats end date as eligibility, not a guaranteed event cutoff; reaching it alone does not establish a No payout. https://docs.polymarket.com/concepts/resolution.md"
+            },
+            "kalshi": {
+              "outcome": "unknown",
+              "evidence": [
+                "k-date",
+                "k-expiry",
+                "k-review"
+              ],
+              "reason": "The binding terms specify terminal expiry and reserve outcome review, but the reviewed sources do not establish the exact no-accepted-nominee payout."
+            }
+          },
+          {
+            "id": "acceptance-between-cutoffs",
+            "category": "late_acceptance",
+            "description": "No previous nominee accepted; Newsom first accepts after Kalshi expiration but before Gamma endDate. Gamma endDate is not assumed to be an acceptance cutoff.",
+            "polymarket": {
+              "outcome": "unknown",
+              "evidence": [
+                "p-date",
+                "p-accept"
+              ],
+              "reason": "Official documentation does not make Gamma endDate a hard acceptance cutoff. This market-specific late-acceptance treatment remains unconfirmed. https://docs.polymarket.com/concepts/resolution.md"
+            },
+            "kalshi": {
+              "outcome": "unknown",
+              "evidence": [
+                "k-date",
+                "k-expiry",
+                "k-review"
+              ],
+              "reason": "The event would follow the contractual expiration; the reviewed terms do not specify a shared cross-platform exceptional payout."
+            }
+          },
+          {
+            "id": "nomination-cancelled",
+            "category": "cancellation",
+            "description": "The party abandons nomination and no one accepts; assume no market-specific clarification has been verified.",
+            "polymarket": {
+              "outcome": "unknown",
+              "evidence": [
+                "p-otherwise",
+                "p-date"
+              ],
+              "reason": "No applicable cancellation clarification was verified. General dispute rules allow Unknown/50-50, but do not assign that result to this case. https://help.polymarket.com/en/articles/13364551-how-are-markets-disputed"
+            },
+            "kalshi": {
+              "outcome": "unknown",
+              "evidence": [
+                "k-expiry",
+                "k-review"
+              ],
+              "reason": "The binding contract retains outcome-review discretion. An exact cancellation settlement was not established; the latest general rulebook could not be verified."
+            }
+          },
+          {
+            "id": "disputed-acceptance",
+            "category": "disputed_outcome",
+            "description": "Official party sources dispute who first accepted, or whether an acceptance was effective.",
+            "polymarket": {
+              "outcome": "unknown",
+              "evidence": [
+                "p-accept"
+              ],
+              "reason": "UMA dispute resolution can return a rare Unknown/50-50 result; the actual disputed-acceptance payout is not prescribed by this general documentation. https://help.polymarket.com/en/articles/13364551-how-are-markets-disputed"
+            },
+            "kalshi": {
+              "outcome": "unknown",
+              "evidence": [
+                "k-first",
+                "k-review"
+              ],
+              "reason": "The contract reserves a separate outcome-review process. No common predetermined resolution with UMA was established."
+            }
+          }
+        ],
+        "profile": "presidential_nomination"
       }
     },
     {

@@ -1,0 +1,99 @@
+{
+  "reviewed_at": "2026-11-25T00:48:51.252514Z",
+  "pair_id": "newsom-democratic-nominee-2028",
+  "status": "needs_review",
+  "rules_fingerprint": "742d883ef85c2dfa251332b372a2800e3e085d82493d03951ed035591f728270",
+  "conclusion": "Public sources clarified process but did not establish equal payouts for the four exceptional cases. No new pair approved.",
+  "verified_facts": [
+    {
+      "finding": "The two current nomination predicates still concern winning and accepting; the captured PRESNOM PDF hash is unchanged.",
+      "sources": [
+        "https://gamma-api.polymarket.com/markets/559652",
+        "https://external-api.kalshi.com/trade-api/v2/markets/KXPRESNOMD-28-GN",
+        "https://assets.kalshi.com/contract_terms/PRESNOM.pdf"
+      ],
+      "terms_sha256": "312fdb80d2e2c71d461f7f943611af4f192f85a5c45a8bf4f9ce1d2da95b5f34"
+    },
+    {
+      "finding": "Polymarket describes end date as eligibility for resolution. It does not establish a market-specific acceptance cutoff.",
+      "sources": [
+        "https://docs.polymarket.com/concepts/resolution.md"
+      ]
+    },
+    {
+      "finding": "Polymarket dispute documentation permits a rare 50/50 outcome; its availability does not determine any particular Newsom exception.",
+      "sources": [
+        "https://help.polymarket.com/en/articles/13364551-how-are-markets-disputed"
+      ]
+    },
+    {
+      "finding": "The binding nomination terms reserve Kalshi outcome review. This does not prescribe its result for each hypothetical.",
+      "sources": [
+        "https://assets.kalshi.com/contract_terms/PRESNOM.pdf"
+      ]
+    }
+  ],
+  "scenario_answers": [
+    {
+      "case_id": "no-acceptance",
+      "polymarket_outcome": "unknown",
+      "kalshi_outcome": "unknown",
+      "answer": "The general resolution guide treats end date as eligibility, not a guaranteed event cutoff; reaching it alone does not establish a No payout. https://docs.polymarket.com/concepts/resolution.md The binding terms specify terminal expiry and reserve outcome review, but the reviewed sources do not establish the exact no-accepted-nominee payout."
+    },
+    {
+      "case_id": "acceptance-between-cutoffs",
+      "polymarket_outcome": "unknown",
+      "kalshi_outcome": "unknown",
+      "answer": "Official documentation does not make Gamma endDate a hard acceptance cutoff. This market-specific late-acceptance treatment remains unconfirmed. https://docs.polymarket.com/concepts/resolution.md The event would follow the contractual expiration; the reviewed terms do not specify a shared cross-platform exceptional payout."
+    },
+    {
+      "case_id": "nomination-cancelled",
+      "polymarket_outcome": "unknown",
+      "kalshi_outcome": "unknown",
+      "answer": "No applicable cancellation clarification was verified. General dispute rules allow Unknown/50-50, but do not assign that result to this case. https://help.polymarket.com/en/articles/13364551-how-are-markets-disputed The binding contract retains outcome-review discretion. An exact cancellation settlement was not established; the latest general rulebook could not be verified."
+    },
+    {
+      "case_id": "disputed-acceptance",
+      "polymarket_outcome": "unknown",
+      "kalshi_outcome": "unknown",
+      "answer": "UMA dispute resolution can return a rare Unknown/50-50 result; the actual disputed-acceptance payout is not prescribed by this general documentation. https://help.polymarket.com/en/articles/13364551-how-are-markets-disputed The contract reserves a separate outcome-review process. No common predetermined resolution with UMA was established."
+    }
+  ],
+  "retrieval_limitations": [
+    {
+      "resource": "market, event and question-specific Polymarket clarifications",
+      "state": "timed_out",
+      "interpretation": "No clarification contents or absence were established.",
+      "documentation": "https://docs.polymarket.com/api-reference/markets/list-market-clarifications",
+      "filters": {
+        "market_id": "559652",
+        "event_id": "30829",
+        "question_id": "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814700"
+      }
+    },
+    {
+      "resource": "Current Kalshi rulebook version",
+      "state": "not_verified",
+      "interpretation": "Official listing returned 429 via direct fetch and exposed no current document link in the accessible page. A secondary-discovered v1.29 URL returned 404. Older versions were not treated as current.",
+      "official_listing": "https://kalshi.com/regulatory/rulebook"
+    }
+  ],
+  "implementation_limitations": [
+    "The existing fingerprint covers saved contract metadata and the binding PDF, not the Polymarket bulletin board or every general platform rulebook. An unchanged fingerprint does not prove an exhaustive rules review."
+  ],
+  "unsent_clarification_questions": [
+    {
+      "recipient_platform": "Polymarket",
+      "question": "For market 559652, how is it resolved if no nominee accepts by the listed endDate? Is endDate an acceptance cutoff or can nomination acceptance after it still satisfy the question?"
+    },
+    {
+      "recipient_platform": "Kalshi",
+      "question": "For KXPRESNOMD-28-GN, what exact payout applies if no nominee has accepted by final expiration, or the first acceptance occurs afterward? Can outcome review assign a nonbinary settlement?"
+    },
+    {
+      "recipient_platform": "Both",
+      "question": "What exact market-specific treatment applies to a cancelled nomination process or disputed acceptance? Identify any binding clarification or rule version."
+    }
+  ],
+  "communications_sent": false
+}

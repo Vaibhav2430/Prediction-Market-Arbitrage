@@ -1,0 +1,27 @@
+{
+  "reviewed_at": "2026-11-25T00:48:51.252514Z",
+  "polymarket_id": "6937472",
+  "kalshi_ticker": "KXU3-26NOV-T3.8",
+  "ordinary_yes_relation": "inverted",
+  "status": "not_equivalent_under_delayed_release_scenario",
+  "ordinary_alignment": "Both refer to November 2026 seasonally adjusted BLS U-3. Polymarket YES is <=3.8%; Kalshi YES is >3.8%.",
+  "material_difference": "Polymarket uses the last available month if specified data is unavailable by the following scheduled monthly release. Kalshi linked terms wait until a later expiration, up to three months after the original release, with an earlier expiration if the data arrives or is cancelled.",
+  "additional_uncertainty": "Polymarket excludes revisions after the first release; Kalshi terms exclude revisions after Expiration. Their revision windows are not presumed equivalent.",
+  "hypothetical_counterexample": {
+    "is_observed_data": false,
+    "conditions": "November data arrives after the following scheduled release but before Kalshi final expiration; no announcement that the data will never be released. Last available month is 3.8%; eventual November print is 4.0%.",
+    "polymarket_yes_outcome": "yes",
+    "kalshi_yes_outcome": "yes",
+    "inverted_yes_yes_nominal_payout": "2.00",
+    "inverted_no_no_nominal_payout": "0.00",
+    "conclusion": "An inverted normal-release mapping does not ensure $1 payout for both packages during this allowed delay scenario."
+  },
+  "sources": [
+    "https://gamma-api.polymarket.com/markets/6937472",
+    "https://external-api.kalshi.com/trade-api/v2/markets/KXU3-26NOV-T3.8",
+    "https://assets.kalshi.com/contract_terms/U3.pdf"
+  ],
+  "terms_sha256": "bb568889c706fb070b0a977352260b545ca8ff9e7c1936a76a1edd77aba3ce2e",
+  "approved": false,
+  "trading_performed": false
+}

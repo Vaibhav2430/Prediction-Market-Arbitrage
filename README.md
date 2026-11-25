@@ -395,3 +395,77 @@ timestamp. Any payout-minus-cost result remains conditional on fills, collateral
 parity, fee behavior, and the validity of the manual settlement review. Approval
 is not a guaranteed-profit claim. This command never places orders or accesses
 credentials. Existing matcher, scanner and paircheck commands are unchanged.
+
+
+## Settlement-scenario validator
+
+```sh
+# Newsom payout table, first checking live rules and binding PDF fingerprint:
+go run ./cmd/settlement
+# Same table using saved rules only (no current-rule claim):
+go run ./cmd/settlement -offline
+# Structured report:
+go run ./cmd/settlement -format json
+```
+
+The initial supported scenario profile is `presidential_nomination`; other
+contract families need their own defined coverage profile rather than reusing
+nomination cases. The Newsom registry entry includes eight documented scenarios: first
+acceptance by Newsom or someone else, both replacement directions, no accepted
+nominee, late acceptance between the listed terminal times, cancellation,
+and disputed acceptance. Four ordinary/replacement scenarios align in the
+manual model. Four exceptional scenarios remain unresolved, so the total
+payout floor remains unknown and approval stays blocked. The validator never
+turns an unclear or void outcome into a $0/$1 assumption.
+
+For the recorded same-direction mapping it calculates Polymarket YES + Kalshi
+NO and Polymarket NO + Kalshi YES. An inverted mapping uses YES + YES and
+NO + NO. A known incompatible case exposes the $0/$2 payout rather than
+reporting an equivalent hedge. Amounts are nominal per one unit on each venue,
+before purchase costs, fees or currency effects. A positive trading margin
+is not calculated by this command.
+
+Scenario models reference exact rule fingerprints and evidence IDs. Snapshot
+excerpts must occur in the cited venue's saved rule field. Binding-PDF evidence
+must reference the correct document URL/hash; its quotation and interpretation
+remain manually supplied, not machine-verified PDF semantics. Models declare
+required scenario categories, unique case/source IDs, individual payout
+assertions and reasons. Invalid evidence, wrong mappings, stale rule bindings,
+missing categories, unknown or void payouts cannot clear the review.
+
+A fully populated, arithmetically compatible table is `compatible_in_model`,
+not automatically approved or proof that the scenarios exhaust all possible
+settlements. Registry approval additionally requires the existing manual
+review evidence and the exact scenario-model fingerprint. Editing the table
+invalidates that attestation. Legacy approved entries without a scenario
+model now fail validation; they must be reviewed and upgraded, not grandfathered
+into quote fetching. Pending/rejected entries without models remain readable.
+
+Default execution fetches current public metadata and the binding PDF before
+showing the table. Changed rules return `rules_changed` and withhold the stale
+table. Retrieval errors fail the check. `-offline` explicitly uses archived
+rules only. No registry file, review status, credentials or orders are modified.
+
+
+### Focused official-source review
+
+`reports/newsom-rules-review.json` records the source-backed findings and
+unanswered questions. The resolution guide distinguishes Polymarket end-date
+eligibility from a hard event cutoff, and its dispute documentation permits
+rare nonbinary outcomes. The table wording was corrected accordingly; four
+exceptional cases remain unresolved and the pair stays unapproved.
+
+Market/event/question clarification requests timed out, so the report does
+not claim that no clarifications exist. The current Kalshi general rulebook
+version could not be verified; older search results were not applied as
+current authority. The contract's specific PDF was rechecked against its
+recorded hash. Pending questions are recorded for platform clarification;
+no messages have been sent. Rule fingerprints do not cover every external
+rulebook or bulletin-board update and are not an exhaustive review guarantee.
+
+`reports/november-unemployment-pair-review.json` documents an alternative
+BLS U-3 pair. Its ordinary monthly predicates align inversely, but delayed
+release and revision windows differ. A hypothetical delay exposes a zero-payout
+package. The example numbers are illustrative, not observed unemployment data.
+This candidate was not approved. No matcher thresholds or approval gates were
+relaxed as a result of the research.
